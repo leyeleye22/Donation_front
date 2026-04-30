@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #ffffff;
+  color: #111827;
+}
+
+@keyframes floatPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 18px 35px rgba(239, 146, 33, 0.28);
+  }
+  50% {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 45px rgba(239, 146, 33, 0.36);
+  }
+}
+
+@keyframes galleryReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes galleryHeroSlide {
+  from {
+    opacity: 0.55;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes galleryStripMove {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes journalHeroSlide {
+  from {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes journalStripMove {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.floating-donate-button {
+  animation: floatPulse 2.8s ease-in-out infinite;
+}
+
+.gallery-tile {
+  animation: galleryReveal 0.55s ease-out both;
+}
+
+.gallery-hero-slide {
+  animation: galleryHeroSlide 0.9s ease-out both;
+}
+
+.gallery-strip-track {
+  width: max-content;
+  animation: galleryStripMove 28s linear infinite;
+}
+
+.gallery-strip:hover .gallery-strip-track {
+  animation-play-state: paused;
+}
+
+.journal-hero-slide {
+  animation: journalHeroSlide 0.9s ease-out both;
+}
+
+.journal-strip-track {
+  width: max-content;
+  animation: journalStripMove 34s linear infinite;
+}
+
+.journal-strip:hover .journal-strip-track {
+  animation-play-state: paused;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.donation-amount {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.donation-amount:hover,
+.donation-amount.selected {
+  border-color: #ef9221;
+  background-color: #fef3e9;
+}
