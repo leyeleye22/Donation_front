@@ -57,7 +57,7 @@ export const defaultHomeEditorContent: HomeEditorContent = {
   heroImage: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8001'}/assets/banner.jpeg`,
   supportImage: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8001'}/assets/consultation.jpeg`,
   proofStrip: homeContent.proofStrip.map((p) => ({ value: p.value, label: p.label })),
-  entryPoints: homeContent.entryPoints.map((e) => ({ title: e.title, description: e.description, image: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8001'}${e.image}`, cta: e.cta, href: e.href })),
+  entryPoints: homeContent.entryPoints.map((e) => ({ title: e.title, description: e.description, image: e.image, cta: e.cta, href: e.href })),
   pillars: homeContent.pillars.map((p) => ({ title: p.title, description: p.description })),
   transparencyTitle: homeContent.transparency.title,
   transparencyDescription: homeContent.transparency.description,
@@ -85,7 +85,7 @@ function resolveContentImages(content: HomeEditorContent): HomeEditorContent {
 export async function loadHomeContent(): Promise<HomeEditorContent> {
   try {
     const res = await api.getPage('home');
-    if (res?.data?.content) return resolveContentImages(res.data.content as HomeEditorContent);
+    if (res?.content) return resolveContentImages(res.content as HomeEditorContent);
   } catch {}
   return defaultHomeEditorContent;
 }

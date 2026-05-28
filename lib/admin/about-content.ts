@@ -41,19 +41,19 @@ export const defaultAboutEditorContent: AboutEditorContent = {
   associationBadge: aboutPageContent.association.badge,
   associationTitle: aboutPageContent.association.title,
   associationBody: [...aboutPageContent.association.body],
-  associationImage: `${BACKEND_URL}${aboutPageContent.association.image}`,
-  portrait: `${BACKEND_URL}${aboutPageContent.associationProfile.portrait}`,
+  associationImage: aboutPageContent.association.image,
+  portrait: aboutPageContent.associationProfile.portrait,
   story: [...aboutPageContent.associationProfile.story],
   founderBadge: aboutPageContent.founder.badge,
   founderTitle: aboutPageContent.founder.title,
   founderSubtitle: aboutPageContent.founder.subtitle,
-  founderPortrait: `${BACKEND_URL}${aboutPageContent.founder.portrait}`,
+  founderPortrait: aboutPageContent.founder.portrait,
   founderQuote: aboutPageContent.founder.quote,
   narrativeTitle: aboutPageContent.founderNarrative.title,
   narrativeParagraphs: [...aboutPageContent.founderNarrative.paragraphs],
   values: aboutPageContent.values.map((v) => ({ title: v.title, description: v.description })),
   timeline: aboutPageContent.timeline.map((t) => ({ year: t.year, title: t.title, text: t.text })),
-  actionStories: aboutPageContent.actionStories.map((a) => ({ title: a.title, text: a.text, image: `${BACKEND_URL}${a.image}` })),
+  actionStories: aboutPageContent.actionStories.map((a) => ({ title: a.title, text: a.text, image: a.image })),
   calloutTitle: aboutPageContent.callout.title,
   calloutDescription: aboutPageContent.callout.description,
   calloutPrimaryCta: aboutPageContent.callout.primaryCta,
@@ -73,7 +73,7 @@ function resolveContentImages(content: AboutEditorContent): AboutEditorContent {
 export async function loadAboutContent(): Promise<AboutEditorContent> {
   try {
     const res = await api.getPage('about');
-    if (res?.data?.content) return resolveContentImages(res.data.content as AboutEditorContent);
+    if (res?.content) return resolveContentImages(res.content as AboutEditorContent);
   } catch {}
   return defaultAboutEditorContent;
 }

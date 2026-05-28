@@ -16,11 +16,38 @@ type DashboardData = {
   recentActivity: { title: string; detail: string; time: string }[];
 };
 
+function mapKpi(res: any): DashboardData {
+  return {
+    kpis: [
+      { label: "Projets", value: String(res.total_projects ?? 0), trend: res.ongoing_projects ? "+" + res.ongoing_projects : "0", trendUp: true },
+      { label: "Publications", value: String(res.published_posts ?? 0), trend: "Publiees", trendUp: true },
+      { label: "Financement", value: (res.collected_percentage ?? 0) + "%", trend: "Collecte", trendUp: true },
+      { label: "Dons", value: String(res.total_donations ?? 0), trend: "Recus", trendUp: (res.total_donations ?? 0) > 0 },
+    ],
+    projectStats: {
+      total: res.total_projects ?? 0,
+      ongoing: res.ongoing_projects ?? 0,
+      completed: res.completed_projects ?? 0,
+      upcoming: (res.total_projects ?? 0) - (res.ongoing_projects ?? 0) - (res.completed_projects ?? 0),
+      totalFundingGoal: res.total_goal ?? 0,
+      totalFundingCollected: res.total_collected ?? 0,
+      byTheme: [],
+    },
+    alerts: [],
+    quickActions: [
+      { title: "Ajouter un projet", detail: "Creer une nouvelle fiche projet", href: "/dashboard/projects" },
+      { title: "Publier un article", detail: "Rediger une actualite", href: "/dashboard/journal" },
+      { title: "Modifier l'accueil", detail: "Editer le contenu de la page d'accueil", href: "/dashboard/content/home" },
+    ],
+    recentActivity: [],
+  };
+}
+
 export function DashboardOverview() {
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    api.getDashboardKpi().then((res) => setData(res)).catch(() => {});
+    api.getDashboardKpi().then((res) => setData(mapKpi(res))).catch(() => {});
   }, []);
 
   if (!data) {

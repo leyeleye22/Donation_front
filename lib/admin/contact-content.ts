@@ -57,7 +57,7 @@ export const defaultContactEditorContent: ContactEditorContent = {
 export async function loadContactContent(): Promise<ContactEditorContent> {
   try {
     const res = await api.getPage('contact');
-    if (res?.data?.content) return res.data.content as ContactEditorContent;
+    if (res?.content) return res.content as ContactEditorContent;
   } catch {}
   return defaultContactEditorContent;
 }

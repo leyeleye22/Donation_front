@@ -86,14 +86,36 @@ export const defaultGlobalSettings: GlobalSettings = {
   pageVisibility: defaultPageVisibility
 };
 
+function mapSettings(res: any): GlobalSettings {
+  return {
+    siteName: res.site_name ?? defaultGlobalSettings.siteName,
+    donationCtaText: res.donation_cta_text ?? defaultGlobalSettings.donationCtaText,
+    showFloatingButton: res.show_floating_button ?? defaultGlobalSettings.showFloatingButton,
+    floatingButtonPages: res.floating_button_pages ?? defaultGlobalSettings.floatingButtonPages,
+    footerCopyright: res.footer_copyright ?? defaultGlobalSettings.footerCopyright,
+    footerIntro: res.footer_intro ?? defaultGlobalSettings.footerIntro,
+    pageSettings: res.page_settings ?? defaultGlobalSettings.pageSettings,
+    pageVisibility: res.page_visibility ?? defaultGlobalSettings.pageVisibility,
+  };
+}
+
 export async function loadGlobalSettings(): Promise<GlobalSettings> {
   try {
     const res = await api.getSettings();
-    if (res?.data) return res.data as GlobalSettings;
+    if (res) return mapSettings(res);
   } catch {}
   return defaultGlobalSettings;
 }
 
 export async function saveGlobalSettings(settings: GlobalSettings): Promise<void> {
-  await api.updateSettings(settings);
+  await api.updateSettings({
+    site_name: settings.siteName,
+    donation_cta_text: settings.donationCtaText,
+    show_floating_button: settings.showFloatingButton,
+    floating_button_pages: settings.floatingButtonPages,
+    footer_copyright: settings.footerCopyright,
+    footer_intro: settings.footerIntro,
+    page_settings: settings.pageSettings,
+    page_visibility: settings.pageVisibility,
+  });
 }
