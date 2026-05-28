@@ -28,25 +28,9 @@ export const navItems: NavItem[] = [
 ];
 
 export const siteSettings: SiteSettings = {
-  siteName: "Entr'aide Humanitaire",
-  heroTitle: {
-    fr: "Ensemble pour un impact concret",
-    en: "Together for real impact",
-    ar: "معا من أجل أثر ملموس"
-  },
-  heroText: {
-    fr: "Phase front Next.js avec fausses données, en conservant fidèlement le design du site existant.",
-    en: "Next.js frontend phase with fake data while preserving the existing site design faithfully.",
-    ar: "مرحلة الواجهة باستخدام Next.js مع بيانات تجريبية مع الحفاظ على تصميم الموقع الحالي."
-  },
-  aboutSummary: {
-    fr: "Une architecture front prête à brancher Laravel plus tard, sans casser l'existant.",
-    en: "A frontend architecture ready to plug into Laravel later without breaking the existing site.",
-    ar: "هيكلة واجهة جاهزة للربط مع Laravel لاحقا بدون كسر الموقع الحالي."
-  },
-  donationCta: {
-    fr: "Faire un don",
-    en: "Donate",
-    ar: "تبرع الآن"
-  }
+  siteName: "Entraide Humanitaire",
+  heroTitle: { fr: "Ensemble pour un impact concret", en: "Together for real impact", ar: "معا من أجل أثر ملموس" },
+  heroText: { fr: "Documenter, informer et mobiliser pour des actions humanitaires transparentes et durables.", en: "Document, inform and mobilize for transparent and sustainable humanitarian action.", ar: "توثيق وإعلام وتعبئة من أجل عمل إنساني شفاف ومستدام." },
+  aboutSummary: { fr: "Une association qui documente ses actions sur le terrain avec rigueur et transparence.", en: "An association that documents its field actions with rigor and transparency.", ar: "جمعية توثق أعمالها الميدانية بدقة وشفافة." },
+  donationCta: { fr: "Faire un don", en: "Donate", ar: "تبرع الآن" }
 };

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Entr'aide Humanitaire",
-  description: "Migration front Next.js avec fausses données."
+  description: "Site officiel de l'association Entraide Humanitaire."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

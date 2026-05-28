@@ -8,3 +8,6 @@ coverage
 .env
 .env.local
 .env.*.local
+
+# Ancien site statique archive
+_archive/

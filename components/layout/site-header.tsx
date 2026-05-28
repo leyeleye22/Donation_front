@@ -1,17 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { homeContent } from "@/lib/mock-data/home";
-import { navItems, siteSettings } from "@/lib/mock-data/site";
+import { navItems as defaultNavItems, siteSettings } from "@/lib/mock-data/site";
 import { siteChromeContent } from "@/lib/mock-data/ui-content";
+import { loadGlobalSettings } from "@/lib/admin/global-settings";
+import { resolveImageUrl } from "@/lib/image-url";
+
+const NAV_STORAGE_KEY = "entraide-admin-nav-items";
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [navItems, setNavItems] = useState(defaultNavItems);
+  const [siteName, setSiteName] = useState("Entr'aide pour servir l'humanité");
+  const [donationText, setDonationText] = useState("Faire un don");
+
+  useEffect(() => {
+    const raw = localStorage.getItem(NAV_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw) as { href: string; label: string; enabled: boolean }[];
+      const enabled = saved
+        .filter((item) => item.enabled)
+        .map((item) => ({
+          href: item.href,
+          label: { fr: item.label, en: item.label, ar: item.label }
+        }));
+      if (enabled.length > 0) setNavItems(enabled);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    loadGlobalSettings().then((settings) => {
+      setSiteName(settings.siteName);
+      setDonationText(settings.donationCtaText);
+    });
+  }, []);
+
+  function isActive(href: string): boolean {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(href + "/");
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
-      <div className="bg-gray-950 py-2 text-white">
+      <div className="bg-gradient-to-r from-primary to-secondary py-2 text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 text-xs sm:px-6 lg:px-8">
           <p className="truncate">
             <span className="mr-2 rounded-full bg-primary px-2 py-1 font-semibold text-white">
@@ -27,10 +63,9 @@ export function SiteHeader() {
 
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <img src="/assets/logo.png" style={{ width: 70 }} alt="Logo" className="w-12 md:w-16 lg:w-20" />
+          <img src={resolveImageUrl('/assets/logo.png')} style={{ width: 70 }} alt="Logo" className="w-12 md:w-16 lg:w-20" />
           <div className="hidden md:block">
-            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Entr'aide</div>
-            <div className="text-sm text-gray-600">{siteChromeContent.emergencyBanner.productLabel}</div>
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{siteName}</div>
           </div>
         </Link>
 
@@ -39,7 +74,9 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-gray-700 transition-colors hover:text-primary lg:text-base"
+              className={`text-sm font-medium transition-colors hover:text-primary lg:text-base ${
+                isActive(item.href) ? "font-bold text-primary" : "text-gray-700"
+              }`}
             >
               {item.label.fr}
             </Link>
@@ -49,12 +86,16 @@ export function SiteHeader() {
         <div className="flex items-center space-x-3 md:space-x-4">
           <Link
             href="/journal"
-            className="hidden whitespace-nowrap rounded-button border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-primary hover:text-primary lg:block"
+            className={`hidden whitespace-nowrap rounded-button px-4 py-2 text-sm font-medium transition-colors lg:block ${
+              isActive("/journal")
+                ? "bg-primary text-white"
+                : "border border-gray-300 text-gray-700 hover:border-primary hover:text-primary"
+            }`}
           >
-            Journal
+            {navItems.find((item) => item.href === "/journal")?.label.fr ?? "Journal"}
           </Link>
           <button className="whitespace-nowrap rounded-button bg-primary px-4 py-2 text-sm text-white transition-colors hover:bg-orange-600 md:px-6 md:text-base">
-            {siteSettings.donationCta.fr}
+            {donationText}
           </button>
           <button className="text-gray-700 md:hidden" onClick={() => setMenuOpen((open) => !open)}>
             <span className="text-2xl">{menuOpen ? "X" : "="}</span>
@@ -69,13 +110,15 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary"
+                className={`block px-4 py-2 transition-colors hover:bg-gray-50 hover:text-primary ${
+                  isActive(item.href) ? "font-bold text-primary" : "text-gray-700"
+                }`}
               >
                 {item.label.fr}
               </Link>
             ))}
             <div className="px-4">
-              <button className="w-full rounded-button bg-primary px-4 py-3 text-white">{siteSettings.donationCta.fr}</button>
+              <button className="w-full rounded-button bg-primary px-4 py-3 text-white">{donationText}</button>
             </div>
           </div>
         </div>

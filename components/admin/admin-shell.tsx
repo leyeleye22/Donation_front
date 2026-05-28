@@ -2,8 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ADMIN_SESSION_KEY } from "@/lib/admin-auth";
+import { adminLogout } from "@/lib/admin-auth";
 import { adminNavigation, type AdminNavItem } from "@/lib/admin/navigation";
+
+const navIcons: Record<string, string> = {
+  Dashboard: "\u2302",
+  "Centre de contenu": "\u270E",
+  Accueil: "\u2302",
+  "A propos": "\u2139",
+  Contact: "\u2709",
+  Projets: "\u2692",
+  Journal: "\u270D",
+  Galerie: "\u25A6",
+  Media: "\u25B6",
+  Navigation: "\u2630",
+  Parametres: "\u2699"
+};
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,8 +30,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const currentSection = navigationItems.find((item) => pathname === item.href);
 
-  function handleLogout() {
-    window.localStorage.removeItem(ADMIN_SESSION_KEY);
+  async function handleLogout() {
+    try { await adminLogout(); } catch {}
     router.push("/login");
     router.refresh();
   }
@@ -27,85 +41,79 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f7f2]">
-      <div className="mx-auto grid min-h-screen max-w-[1680px] lg:grid-cols-[300px_1fr]">
-        <aside className="border-r border-secondary/10 bg-[#fbfcf8] p-5 lg:p-6">
-          <div className="rounded-[30px] bg-[linear-gradient(135deg,_#fff7ed_0%,_#ffffff_42%,_#f7fbf4_100%)] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] ring-1 ring-secondary/10">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-white shadow-[0_12px_24px_rgba(239,146,33,0.2)]">
-                EH
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Admin panel</div>
-                <div className="mt-1 text-xl font-bold text-gray-950">Entr&apos;aide</div>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto flex min-h-screen max-w-[1600px]">
+        <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
+          <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
+            <img src="http://localhost:8001/assets/logo.png" alt="Logo" className="h-9 w-9" />
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary">Admin</div>
+              <div className="text-sm font-bold text-gray-900">Entr&apos;aide</div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-gray-600">Un espace plus simple pour modifier le site sans connaissance technique.</p>
           </div>
 
-          <nav className="mt-6 space-y-5">
+          <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
             {adminNavigation.map((group) => (
               <div key={group.title}>
-                <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-gray-400">{group.title}</div>
-                <div className="space-y-1.5">
-                  {group.items.map((item) => {
-                    const active = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                          active
-                            ? "bg-white text-gray-950 shadow-[0_14px_30px_rgba(15,23,42,0.08)] ring-1 ring-primary/18"
-                            : "text-gray-700 hover:bg-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
-                        }`}
-                      >
-                        <span>{item.label}</span>
-                        <span className={`h-2.5 w-2.5 rounded-full ${active ? "bg-primary" : "bg-secondary/25"}`} />
-                      </Link>
-                    );
-                  })}
-                </div>
+                <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">{group.title}</div>
+                {group.items.map((item) => {
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                        active
+                          ? "bg-orange-50 font-semibold text-primary"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      }`}
+                    >
+                      <span className={`flex h-6 w-6 items-center justify-center text-base ${active ? "text-primary" : "text-gray-400"}`}>
+                        {navIcons[item.label] || "\u25CB"}
+                      </span>
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
               </div>
             ))}
           </nav>
 
-          <div className="mt-6 rounded-[26px] bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)] ring-1 ring-secondary/10">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Mode actuel</div>
-            <p className="mt-2 text-sm leading-6 text-gray-700">Edition guidee, apercus et contenus structures avant le vrai backend Laravel.</p>
+          <div className="border-t border-gray-100 px-3 py-3">
+            <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-500">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500">
+                A
+              </span>
+              <span className="truncate text-xs">Administrateur</span>
+            </div>
           </div>
         </aside>
 
-        <div className="min-w-0">
-          <header className="sticky top-0 z-30 border-b border-secondary/10 bg-[#f5f7f2]/92 backdrop-blur">
-            <div className="flex flex-col gap-4 px-6 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="ml-64 flex flex-1 flex-col">
+          <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
+            <div className="flex items-center justify-between px-6 py-3">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Dashboard admin</div>
-                <div className="mt-1 text-2xl font-bold text-gray-950">{currentSection?.label ?? "Edition guidee du contenu"}</div>
-                <div className="mt-1 text-sm text-gray-500">Une interface plus claire pour modifier, verifier et organiser les contenus.</div>
+                <h1 className="text-lg font-bold text-gray-900">{currentSection?.label ?? "Tableau de bord"}</h1>
+                <p className="text-xs text-gray-500">Espace d&apos;administration</p>
               </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="rounded-full border border-secondary/12 bg-white px-4 py-2 text-sm text-gray-600 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-                  Session demo active
-                </div>
+              <div className="flex items-center gap-3">
                 <Link
                   href="/"
-                  className="rounded-button border border-secondary/16 bg-white px-5 py-3 text-center text-sm font-semibold text-secondary shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition hover:bg-secondary/6"
+                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
                 >
                   Voir le site
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="rounded-button bg-primary px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:brightness-90"
                 >
-                  Deconnexion
+                  D&eacute;connexion
                 </button>
               </div>
             </div>
           </header>
 
-          <main className="px-6 py-8 lg:px-8">{children}</main>
+          <main className="flex-1 px-6 py-6">{children}</main>
         </div>
       </div>
     </div>

@@ -45,7 +45,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   const progress = Math.round((project.collectedAmount / project.goalAmount) * 100);
   const updates = fakeUpdates[project.theme] ?? [];
-  const relatedImages = [project.coverImage, "/assets/whats.jpeg", "/assets/about.jpeg"];
+  const relatedImages = [project.coverImage, "http://localhost:8001/assets/whats.jpeg", "http://localhost:8001/assets/about.jpeg"];
 
   return (
     <div className="bg-white">
@@ -80,7 +80,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Action humanitaire
             </div>
             <p className="mb-6 text-base leading-7 text-gray-600">
-              Cette fiche projet doit permettre de comprendre rapidement ce qui est mené, pour qui, avec quel niveau de progression, et comment un soutien peut s'y rattacher.
+              Decouvrez les details du projet, son avancement, les beneficiaires concernes et comment vous pouvez apporter votre soutien.
             </p>
 
             <div className="mb-6 grid gap-4 sm:grid-cols-2">
@@ -111,7 +111,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </div>
 
             <div className="mb-3 flex justify-between text-sm text-gray-500">
-              <span>Progression simulee</span>
+              <span>Progression</span>
               <span>{progress}%</span>
             </div>
             <div className="mb-8 h-3 w-full rounded-full bg-gray-100">
@@ -149,10 +149,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </div>
             ))}
           </div>
-          <div className="mt-10 rounded-[28px] bg-gray-950 p-8 text-white">
-            <div className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-200">Pourquoi cette page compte</div>
-            <p className="max-w-4xl text-lg leading-8 text-gray-300">
-              Quand on clique sur un projet, on ne doit pas arriver sur une coquille vide. La page doit servir de point central entre l'image, la progression, les mises à jour et l'appel au don.
+            <div className="mt-10 rounded-[28px] bg-gradient-to-r from-primary to-secondary p-8 text-white">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-200">Prochaines etapes</div>
+            <p className="max-w-4xl text-lg leading-8 text-white/90">
+              Chaque projet fait l'objet d'un suivi regulier. Les mises a jour, photos et rapports sont publies dans le journal et la galerie pour assurer une transparence totale.
             </p>
           </div>
         </div>

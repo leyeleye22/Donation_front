@@ -34,21 +34,21 @@ export const homeContent = {
       title: "Explorer les projets",
       description: "Voir les actions en cours, les besoins, la progression et les pages detaillees.",
       href: "/projects",
-      image: "/assets/puits.jpeg",
+      image: "http://localhost:8001/assets/puits.jpeg",
       cta: "Ouvrir les projets"
     },
     {
       title: "Lire le journal",
       description: "Suivre les nouvelles du terrain, les comptes rendus et les mises a jour utiles.",
       href: "/journal",
-      image: "/assets/consultation.jpeg",
+      image: "http://localhost:8001/assets/consultation.jpeg",
       cta: "Ouvrir le journal"
     },
     {
       title: "Voir la galerie",
       description: "Entrer dans l'action par l'image avec des scenes de terrain et des interventions visibles.",
       href: "/gallery",
-      image: "/assets/about.jpeg",
+      image: "http://localhost:8001/assets/about.jpeg",
       cta: "Ouvrir la galerie"
     }
   ],
@@ -95,7 +95,7 @@ export const homeContent = {
       title: "750K+ repas distribues",
       description: "Des distributions menees dans plusieurs zones d'intervention avec une logistique terrain continue.",
       badgeColor: "bg-primary",
-      image: "/assets/bouffe.jpeg",
+      image: "http://localhost:8001/assets/bouffe.jpeg",
       footer: "Suivi depuis 2020"
     },
     {
@@ -103,7 +103,7 @@ export const homeContent = {
       title: "1 800 eleves accompagnes",
       description: "Du soutien scolaire, des kits et un suivi plus visible des besoins educationnels.",
       badgeColor: "bg-secondary",
-      image: "/assets/educationn.jpeg",
+      image: "http://localhost:8001/assets/educationn.jpeg",
       footer: "Focus terrain"
     },
     {
@@ -111,7 +111,7 @@ export const homeContent = {
       title: "450 familles relogees",
       description: "Des solutions d'appui pour des situations de vulnerabilite sociale et materielle.",
       badgeColor: "bg-primary",
-      image: "/assets/logement.jpeg",
+      image: "http://localhost:8001/assets/logement.jpeg",
       footer: "Accompagnement progressif"
     },
     {
@@ -119,14 +119,14 @@ export const homeContent = {
       title: "12 sites renoves ou equipes",
       description: "Des interventions visibles sur les espaces d'accueil, d'apprentissage et de vie collective.",
       badgeColor: "bg-secondary",
-      image: "/assets/chantier.png",
+      image: "http://localhost:8001/assets/chantier.png",
       footer: "Travaux suivis"
     }
   ],
   transparency: {
     title: "Un site pense comme une base de suivi",
     description:
-      "Le front est structure pour montrer les projets, publier les nouvelles importantes et rendre les actions plus lisibles avant le branchement Laravel.",
+      "Le site est structure pour montrer les projets, publier les nouvelles importantes et rendre les actions plus lisibles et transparentes.",
     items: [
       { value: "Journal", label: "Actualites et mises a jour" },
       { value: "Galerie", label: "Photos et traces du terrain" },

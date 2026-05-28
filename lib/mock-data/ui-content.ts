@@ -4,8 +4,7 @@ export const siteChromeContent = {
     productLabel: "Projets, journal et impact"
   },
   footer: {
-    intro:
-      "Une base front inspiree des meilleurs sites associatifs: mission lisible, projets visibles, journal editorial et transparence du terrain.",
+    intro: "Une association qui documente ses actions pour plus de transparence et d'impact sur le terrain.",
     stats: [
       { value: "25", label: "projets" },
       { value: "4", label: "axes d'action" },
@@ -13,54 +12,46 @@ export const siteChromeContent = {
       { value: "1000+", label: "beneficiaires" }
     ],
     transparencyTitle: "Transparence",
-    transparencyText:
-      "Le journal, les galeries et les pages projet servent ici de base de suivi avant l'integration Laravel.",
-    copyright:
-      "2026 Entr'aide Humanitaire. Front de demonstration base sur des contenus fictifs et des assets du projet."
+    transparencyText: "Le journal, les galeries et les pages projet permettent un suivi detaille de chaque action.",
+    copyright: "2025-2026 Entraide Humanitaire. Tous droits reserves."
   }
 };
 
 export const pageContent = {
   projects: {
     eyebrow: "Projets",
-    title: "Des projets navigables, filtrables et deja presentables.",
-    description:
-      "Ici on simule un vrai catalogue de projets avec des cartes cliquables, des indicateurs visibles et une lecture plus produit.",
+    title: "Decouvrez nos projets et leur impact sur le terrain.",
+    description: "Parcourez les actions en cours et passees, filtrez par theme ou statut et accedez aux fiches detaillees de chaque projet.",
     allProjectsCta: "Voir tous les projets",
     openProjectCta: "Ouvrir la fiche projet",
-    simulateDonationCta: "Simuler un don vers ce projet"
+    simulateDonationCta: "Faire un don"
   },
   projectDetail: {
     eyebrow: "Fiche projet",
     updatesEyebrow: "Mises a jour projet",
-    updatesTitle: "Un detail plus vivant, meme avant le back.",
-    donationCta: "Simuler un don",
+    updatesTitle: "Suivez l'avancement de chaque projet.",
+    donationCta: "Faire un don",
     updatesCta: "Lire les mises a jour"
   },
   about: {
     eyebrow: "A propos",
-    title: "Une presentation plus forte, plus credible, plus utile.",
-    description:
-      "Cette page sert a poser la mission, la ligne editoriale et la promesse de transparence du site.",
+    title: "Decouvrez notre mission et nos valeurs.",
+    description: "Une equipe dediee a l'impact social et a la transparence.",
     badge: "Mission et structure",
-    statement: "Le site ne doit pas seulement paraitre beau. Il doit rassurer.",
-    copy:
-      "On construit ici un front qui aide a raconter les actions, a organiser les projets et a donner de la lisibilite aux publications avant de brancher Laravel."
+    statement: "Agir ensemble pour un monde plus solidaire.",
+    copy: "Notre force : la transparence et l'ancrage local."
   },
   gallery: {
     eyebrow: "Galerie",
-    title: "Une galerie qui se filtre et se consulte vraiment.",
-    description:
-      "On utilise sans complexe les images du repo, y compris en duplication, pour valider la qualite du rendu et des parcours.",
+    title: "Voir le terrain en images.",
+    description: "Des visuels qui temoignent de nos actions et de notre impact.",
     closeCta: "Fermer"
   },
   contact: {
     eyebrow: "Contact",
-    title: "Une page contact qui ressemble deja a un vrai point d'entree.",
-    description:
-      "Meme sans backend, on peut valider le parcours, la clarte des infos et le feedback utilisateur.",
+    title: "Une question ? Un projet a proposer ? Ecrivez-nous.",
+    description: "Nous sommes a votre ecoute pour toute information ou collaboration.",
     formTitle: "Envoyer un message",
-    successMessage:
-      "Message simule envoye. Cette confirmation sert a valider le comportement front avant le branchement Laravel."
+    successMessage: "Merci pour votre message. Nous vous repondrons dans les plus brefs delais."
   }
-} as const;
+};

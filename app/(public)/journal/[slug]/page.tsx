@@ -47,11 +47,11 @@ const articleBodies: Record<string, string[]> = {
   "ligne-editoriale-transparence-terrain": [
     "Un site humanitaire credible montre plus que des slogans. Il montre des projets, des mises a jour, des images, des points de repere et une vraie logique editoriale.",
     "Cette page explique pourquoi le journal, la galerie et les fiches projet doivent rester relies. Ensemble, ils creent un parcours plus clair pour comprendre, suivre et soutenir.",
-    "Le futur backend pourra brancher tout cela sur un CMS ou Laravel, mais la qualite du front se valide deja ici."
+    "Chaque article est documente et verifie pour garantir la qualite et la fiabilite des informations publiees."
   ]
 };
 
-const supportingImages = ["/assets/about.jpeg", "/assets/consultation.jpeg", "/assets/whats.jpeg"];
+const supportingImages = ["http://localhost:8001/assets/about.jpeg", "http://localhost:8001/assets/consultation.jpeg", "http://localhost:8001/assets/whats.jpeg"];
 
 export default async function JournalArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -82,7 +82,7 @@ export default async function JournalArticlePage({ params }: { params: Promise<{
                   href="/journal"
                   className="rounded-button border border-secondary/18 bg-white px-6 py-3.5 text-center font-semibold text-secondary transition hover:bg-secondary/6"
                 >
-                  Retour au journal
+                  &larr; Retour au journal
                 </Link>
                 <Link
                   href="/projects"
@@ -99,7 +99,7 @@ export default async function JournalArticlePage({ params }: { params: Promise<{
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="rounded-[28px] border border-white/40 bg-white/88 p-5 backdrop-blur">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{post.createdAt}</div>
-                  <div className="mt-2 text-2xl font-bold text-gray-950">Une page detaillee pour valider le rendu front avant le backend.</div>
+                  <div className="mt-2 text-2xl font-bold text-gray-950">Suivez nos actions et l'avancement de nos projets sur le terrain.</div>
                 </div>
               </div>
             </div>
@@ -147,7 +147,7 @@ export default async function JournalArticlePage({ params }: { params: Promise<{
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-3xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Continuer la lecture</p>
-            <h2 className="text-4xl font-bold text-gray-950">D&apos;autres articles pour suivre le terrain et les projets.</h2>
+            <h2 className="text-4xl font-bold text-gray-950">Continuez a suivre nos actions et reportages.</h2>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">

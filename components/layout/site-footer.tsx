@@ -1,15 +1,26 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { navItems } from "@/lib/mock-data/site";
 import { siteChromeContent } from "@/lib/mock-data/ui-content";
+import { loadGlobalSettings, type GlobalSettings, defaultGlobalSettings } from "@/lib/admin/global-settings";
+import { resolveImageUrl } from "@/lib/image-url";
 
 export function SiteFooter() {
+  const [settings, setSettings] = useState<GlobalSettings>(defaultGlobalSettings);
+
+  useEffect(() => {
+    loadGlobalSettings().then(setSettings);
+  }, []);
+
   return (
     <footer className="border-t border-secondary/10 bg-[linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_60%,_#fff7ed_100%)] py-16 text-gray-950">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-8">
         <div>
-          <img src="/assets/logo.png" alt="Logo" className="mb-5 w-16" />
+          <img src={resolveImageUrl('/assets/logo.png')} alt="Logo" className="mb-5 w-16" />
           <p className="mb-6 max-w-xl text-sm leading-6 text-gray-600">
-            {siteChromeContent.footer.intro}
+            {settings.footerIntro}
           </p>
           <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 sm:grid-cols-4">
             {siteChromeContent.footer.stats.map((stat) => (
@@ -46,7 +57,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="mx-auto mt-12 max-w-7xl border-t border-secondary/10 px-4 pt-6 text-sm text-gray-500 sm:px-6 lg:px-8">
-        <p>{siteChromeContent.footer.copyright}</p>
+        <p>{settings.footerCopyright}</p>
       </div>
     </footer>
   );

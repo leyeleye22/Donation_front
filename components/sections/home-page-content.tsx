@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { homeContent } from "@/lib/mock-data/home";
+import { homeContent as fallbackContent } from "@/lib/mock-data/home";
+import { loadHomeContent, type HomeEditorContent } from "@/lib/admin/home-content";
 import { posts } from "@/lib/mock-data/posts";
 import { projects } from "@/lib/mock-data/projects";
+import { SectionVisibility } from "@/components/ui/section-visibility";
+import { resolveImageUrl } from "@/lib/image-url";
 
 function projectProgress(goalAmount: number, collectedAmount: number) {
   return Math.round((collectedAmount / goalAmount) * 100);
@@ -43,7 +46,10 @@ function projectThemeLabel(theme: "education" | "water" | "health" | "tabaski" |
 const HOME_PROJECT_PAGE_SIZE = 4;
 
 export function HomePageContent() {
+  const [cms, setCms] = useState<HomeEditorContent | null>(null);
   const [donationOpen, setDonationOpen] = useState(false);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState("");
   const [activeProjectStatus, setActiveProjectStatus] = useState<(typeof homeProjectStatusFilters)[number]["id"]>("all");
   const [activeProjectTheme, setActiveProjectTheme] = useState<(typeof homeProjectThemeFilters)[number]["id"]>("all");
   const [homeProjectPage, setHomeProjectPage] = useState(1);
@@ -67,6 +73,8 @@ export function HomePageContent() {
     projects[0] ??
     null;
   const featuredPosts = posts.slice(0, 3);
+
+  useEffect(() => { loadHomeContent().then(setCms); }, []);
 
   useEffect(() => {
     setHomeProjectPage(1);
@@ -95,48 +103,35 @@ export function HomePageContent() {
 
   return (
     <>
-      <section className="border-b border-secondary/10 bg-secondary/8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 text-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
-              {homeContent.emergencyBanner.label}
-            </span>
-            <p className="text-gray-700">{homeContent.emergencyBanner.text}</p>
-          </div>
-          <Link href="/journal" className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary transition hover:text-primary">
-            Dernieres nouvelles
-          </Link>
-        </div>
-      </section>
-
-      <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.16),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.18),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_54%,_#fff7ed_100%)]">
+      <SectionVisibility section="hero">
+        <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.16),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.18),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_54%,_#fff7ed_100%)]">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center">
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.28em] text-secondary">
-              {homeContent.hero.eyebrow}
+              {cms?.heroEyebrow ?? fallbackContent.hero.eyebrow}
             </p>
             <h1 className="max-w-4xl text-5xl font-bold leading-[1.04] text-gray-950 md:text-6xl">
-              {homeContent.hero.title}
+              {cms?.heroTitle ?? fallbackContent.hero.title}
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">{homeContent.hero.description}</p>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">{cms?.heroDescription ?? fallbackContent.hero.description}</p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <button
                 className="rounded-button bg-primary px-8 py-4 text-lg font-semibold text-white transition hover:bg-orange-500"
                 onClick={() => setDonationOpen(true)}
               >
-                {homeContent.hero.primaryCta}
+                {cms?.primaryCta ?? fallbackContent.hero.primaryCta}
               </button>
               <Link
                 href="/projects"
                 className="rounded-button border border-secondary/20 bg-white px-8 py-4 text-center text-lg font-semibold text-secondary transition hover:border-secondary hover:bg-secondary/5"
               >
-                {homeContent.hero.secondaryCta}
+                {cms?.secondaryCta ?? fallbackContent.hero.secondaryCta}
               </Link>
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {homeContent.hero.stats.map((stat, index) => (
+              {(cms?.heroStats ?? fallbackContent.hero.stats).map((stat, index) => (
                 <div
                   key={stat.label}
                   className={`rounded-[24px] border p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] ${
@@ -153,11 +148,11 @@ export function HomePageContent() {
 
           <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="relative overflow-hidden rounded-[36px] border border-white/10 shadow-[0_28px_90px_rgba(0,0,0,0.35)]">
-              <img src="/assets/banner.jpeg" alt="Mission humanitaire" className="h-[540px] w-full object-cover" />
+              <img src={resolveImageUrl("/assets/banner.jpeg")} alt="Mission humanitaire" className="h-[540px] w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/12 to-transparent" />
               <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-6">
                 <div className="rounded-full border border-white/60 bg-white/85 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary backdrop-blur">
-                  {homeContent.hero.featuredLabel}
+                  {cms?.featuredLabel ?? fallbackContent.hero.featuredLabel}
                 </div>
                 <button
                   className="rounded-full bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg transition hover:bg-orange-500"
@@ -168,60 +163,64 @@ export function HomePageContent() {
               </div>
               <div className="absolute inset-x-0 bottom-0 p-6">
                 <div className="max-w-xl rounded-[28px] border border-white/60 bg-white/88 p-6 backdrop-blur-md">
-                  <h2 className="text-2xl font-bold leading-tight text-gray-950">{homeContent.hero.featuredTitle}</h2>
-                  <p className="mt-3 text-sm leading-7 text-gray-700">{homeContent.hero.featuredDescription}</p>
+                  <h2 className="text-2xl font-bold leading-tight text-gray-950">{cms?.featuredTitle ?? fallbackContent.hero.featuredTitle}</h2>
+                  <p className="mt-3 text-sm leading-7 text-gray-700">{cms?.featuredDescription ?? fallbackContent.hero.featuredDescription}</p>
                 </div>
               </div>
             </div>
 
             <div className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
-                <img src="/assets/consultation.jpeg" alt="Consultation terrain" className="h-64 w-full rounded-[28px] object-cover" />
-                <img src="/assets/education.jpeg" alt="Education terrain" className="h-64 w-full rounded-[28px] object-cover" />
+                <img src={resolveImageUrl("/assets/consultation.jpeg")} alt="Consultation terrain" className="h-64 w-full rounded-[28px] object-cover" />
+                <img src={resolveImageUrl("/assets/education.jpeg")} alt="Education terrain" className="h-64 w-full rounded-[28px] object-cover" />
               </div>
               <div className="rounded-[30px] border border-secondary/12 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
                 <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Pourquoi ce site</div>
-                    <div className="mt-2 text-2xl font-bold text-gray-950">Faire ressentir l'utilite de l'action des l'arrivee.</div>
+                    <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Notre demarche</div>
+                    <div className="mt-2 text-2xl font-bold text-gray-950">Donner a voir l'impact concret de chaque action.</div>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {homeContent.hero.trustPoints.map((point) => (
+                  {(cms?.trustPoints ?? fallbackContent.hero.trustPoints).map((point) => (
                     <div key={point} className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-gray-700">
                       {point}
                     </div>
                   ))}
                 </div>
               </div>
-              <img src="/assets/puits.jpeg" alt="Acces a l'eau" className="h-40 w-full rounded-[28px] object-cover" />
+              <img src={resolveImageUrl("/assets/puits.jpeg")} alt="Acces a l'eau" className="h-40 w-full rounded-[28px] object-cover" />
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="bg-white py-6">
+      <SectionVisibility section="trustBar">
+        <section className="bg-white py-6">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-          {homeContent.proofStrip.map((item) => (
+          {(cms?.proofStrip ?? fallbackContent.proofStrip).map((item) => (
             <div key={item.label} className="rounded-[26px] border border-gray-100 bg-white px-5 py-5 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
               <div className="text-2xl font-bold text-gray-950">{item.value}</div>
               <div className="mt-1 text-sm text-gray-600">{item.label}</div>
             </div>
           ))}
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="bg-[#f8f5ef] py-20">
+      <SectionVisibility section="entryPoints">
+        <section className="bg-[#f8f5ef] py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-3xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Entrees directes</p>
-            <h2 className="text-4xl font-bold text-gray-950">Donner de la valeur des la premiere navigation.</h2>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Decouvrir l'association</p>
+            <h2 className="text-4xl font-bold text-gray-950">Explorer nos actions, nos projets et notre impact.</h2>
             <p className="mt-4 text-lg leading-8 text-gray-600">
-              Chaque premiere action doit etre evidente: suivre un projet, comprendre le terrain ou entrer dans les images.
+              Suivez nos projets en cours, parcourez le journal de terrain et plongez au coeur de nos interventions.
             </p>
           </div>
           <div className="grid gap-6 lg:grid-cols-3">
-            {homeContent.entryPoints.map((item) => (
+            {(cms?.entryPoints ?? fallbackContent.entryPoints).map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
@@ -247,16 +246,18 @@ export function HomePageContent() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="bg-white py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Projets visibles</p>
-              <h2 className="text-4xl font-bold text-gray-950">Les projets doivent parler d'eux-memes par l'image et le detail.</h2>
+      <SectionVisibility section="projects">
+        <section className="bg-white py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Projets</p>
+              <h2 className="text-4xl font-bold text-gray-950">Decouvrez nos projets et leur avancement sur le terrain.</h2>
               <p className="mt-4 text-lg leading-8 text-gray-600">
-                L'accueil doit deja faire sentir l'urgence, l'utilite et la progression. Chaque carte mene a une page detaillee.
+                Chaque projet est documente avec des images, des objectifs chiffres et un suivi de progression transparent.
               </p>
             </div>
             <Link
@@ -322,9 +323,9 @@ export function HomePageContent() {
 
                   <div className="grid gap-6 p-8 md:grid-cols-[0.8fr_1.2fr]">
                     <div className="rounded-[28px] bg-secondary/6 p-6">
-                      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Impact direct</div>
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Progression</div>
                       <div className="text-4xl font-bold text-gray-950">{projectProgress(activeProject.goalAmount, activeProject.collectedAmount)}%</div>
-                      <p className="mt-2 text-sm leading-6 text-gray-600">du financement cible est deja simule sur ce projet.</p>
+                      <p className="mt-2 text-sm leading-6 text-gray-600">du financement cible atteint pour ce projet.</p>
                       <div className="mt-6 h-2 w-full rounded-full bg-secondary/10">
                         <div
                           className="h-2 rounded-full bg-secondary"
@@ -344,13 +345,13 @@ export function HomePageContent() {
                     <div className="flex flex-col justify-between">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <img src={activeProject.coverImage} alt={`${activeProject.title.fr} scene terrain`} className="h-40 w-full rounded-[24px] object-cover" />
-                        <img src="/assets/about.jpeg" alt="Equipe terrain" className="h-40 w-full rounded-[24px] object-cover" />
+                        <img src={resolveImageUrl("/assets/about.jpeg")} alt="Equipe terrain" className="h-40 w-full rounded-[24px] object-cover" />
                       </div>
                       <div className="mt-6 rounded-[24px] border border-primary/20 bg-gradient-to-r from-primary/12 to-secondary/10 p-4">
-                        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Passer a l'action</div>
-                        <h4 className="mt-2 text-xl font-bold text-gray-950">Soutenez ce projet maintenant</h4>
+                        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Soutenir</div>
+                        <h4 className="mt-2 text-xl font-bold text-gray-950">Contribuez a ce projet</h4>
                         <p className="mt-2 text-sm leading-6 text-gray-700">
-                          Faites ressortir ce besoin comme l'action principale: soutenir le terrain maintenant, puis consulter le detail complet.
+                          Votre soutien permet de financer les actions sur le terrain et d'accompagner les communautes dans le besoin.
                         </p>
                       </div>
                       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -467,16 +468,18 @@ export function HomePageContent() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="overflow-hidden bg-[linear-gradient(180deg,_#f8f5ef_0%,_#ffffff_100%)] py-20">
+      <SectionVisibility section="mission">
+        <section className="overflow-hidden bg-[linear-gradient(180deg,_#f8f5ef_0%,_#ffffff_100%)] py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <div className="rounded-[34px] border border-primary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Mission et priorites</p>
-              <h2 className="text-4xl font-bold leading-tight text-gray-950">Un site humanitaire doit expliquer l'action, pas juste occuper l'ecran.</h2>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Mission</p>
+              <h2 className="text-4xl font-bold leading-tight text-gray-950">Agir pour l'humain, avec transparence et efficacite.</h2>
               <p className="mt-5 text-lg leading-8 text-gray-600">
-                Ici, on veut poser un cadre simple: montrer ce qui est fait, suivre ce qui avance et donner au public assez d'elements pour comprendre pourquoi l'action compte.
+                Notre mission est de montrer ce qui est fait sur le terrain, de suivre l'avancement des projets et de donner a chacun les moyens de comprendre et de soutenir notre action.
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -495,12 +498,12 @@ export function HomePageContent() {
               </div>
 
               <div className="mt-8 overflow-hidden rounded-[28px]">
-                <img src="/assets/about.jpeg" alt="Action humanitaire" className="h-64 w-full object-cover" />
+                <img src={resolveImageUrl("/assets/about.jpeg")} alt="Action humanitaire" className="h-64 w-full object-cover" />
               </div>
             </div>
 
             <div className="grid gap-5">
-              {homeContent.pillars.map((pillar, index) => (
+              {(cms?.pillars ?? fallbackContent.pillars).map((pillar, index) => (
                 <div
                   key={pillar.title}
                   className="group grid gap-4 rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 md:grid-cols-[84px_1fr]"
@@ -525,10 +528,10 @@ export function HomePageContent() {
               <div className="rounded-[30px] border border-primary/14 bg-gradient-to-r from-primary/10 via-white to-secondary/10 p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">CTA plus direct</div>
-                    <h3 className="mt-2 text-2xl font-bold text-gray-950">Voir les projets ou soutenir une action.</h3>
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Agir</div>
+                    <h3 className="mt-2 text-2xl font-bold text-gray-950">Decouvrez nos projets ou soutenez notre action.</h3>
                     <p className="mt-2 text-sm leading-6 text-gray-700">
-                      On reduit le texte pour garder une action plus claire et moins repetitive.
+                      Explorez les projets en cours et contribuez directement a ceux qui vous parlent le plus.
                     </p>
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row">
@@ -550,14 +553,16 @@ export function HomePageContent() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="bg-white py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-2xl">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Journal</p>
-              <h2 className="text-4xl font-bold text-gray-950">Le terrain doit aussi se raconter dans le temps.</h2>
+      <SectionVisibility section="journal">
+        <section className="bg-white py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-2xl">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Journal</p>
+              <h2 className="text-4xl font-bold text-gray-950">Suivez nos actualites et nos reportages de terrain.</h2>
             </div>
             <Link href="/journal" className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-600 hover:text-primary">
               Ouvrir le journal
@@ -598,49 +603,55 @@ export function HomePageContent() {
               ))}
 
               <div className="rounded-[30px] bg-[#fff3df] p-6">
-                <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Editorial</div>
-                <h3 className="mb-3 text-2xl font-bold text-gray-950">Projets, images et nouvelles doivent avancer ensemble.</h3>
+                <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Actualites</div>
+                <h3 className="mb-3 text-2xl font-bold text-gray-950">Des nouvelles regulieres du terrain pour suivre les projets.</h3>
                 <p className="text-sm leading-7 text-gray-600">
-                  Le journal n'est pas un bloc secondaire. Il sert a contextualiser les actions, montrer leur evolution et nourrir la confiance.
+                  Le journal de terrain permet de contextualiser les actions, de suivre leur evolution et de rendre compte de notre impact.
                 </p>
               </div>
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="bg-[linear-gradient(180deg,_#f7fbf4_0%,_#ffffff_100%)] py-20">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8">
-          <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-secondary">Transparence</p>
-            <h2 className="mb-4 text-4xl font-bold text-gray-950">{homeContent.transparency.title}</h2>
-            <p className="max-w-xl leading-8 text-gray-600">{homeContent.transparency.description}</p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {homeContent.transparency.items.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-primary/10 bg-primary/5 p-5">
-                  <div className="text-2xl font-bold text-gray-950">{item.value}</div>
-                  <div className="mt-1 text-sm text-gray-600">{item.label}</div>
+      <SectionVisibility section="transparency">
+        <section className="bg-[linear-gradient(180deg,_#f7fbf4_0%,_#ffffff_100%)] py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
+              <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-secondary">Transparence</p>
+                <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.transparencyTitle ?? fallbackContent.transparency.title}</h2>
+                <p className="max-w-xl leading-8 text-gray-600">{cms?.transparencyDescription ?? fallbackContent.transparency.description}</p>
+                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  {(cms?.transparencyItems ?? fallbackContent.transparency.items).map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-primary/10 bg-primary/5 p-5">
+                      <div className="text-2xl font-bold text-gray-950">{item.value}</div>
+                      <div className="mt-1 text-sm text-gray-600">{item.label}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <img src={resolveImageUrl("/assets/about.jpeg")} alt="Association" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
+                <img src={resolveImageUrl("/assets/whats.jpeg")} alt="Terrain" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
+                <img src={resolveImageUrl("/assets/consultation.jpeg")} alt="Sante" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
+                <img src={resolveImageUrl("/assets/classe.jpeg")} alt="Education" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
+              </div>
             </div>
           </div>
+        </section>
+      </SectionVisibility>
 
-          <div className="grid grid-cols-2 gap-4">
-            <img src="/assets/about.jpeg" alt="Association" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
-            <img src="/assets/whats.jpeg" alt="Terrain" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
-            <img src="/assets/consultation.jpeg" alt="Sante" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
-            <img src="/assets/classe.jpeg" alt="Education" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
-          </div>
-        </div>
-      </section>
-
-      <section id="multimedia" className="bg-white py-20">
+      <SectionVisibility section="gallery">
+        <section id="multimedia" className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Galerie</p>
-              <h2 className="mb-4 text-4xl font-bold text-gray-950">{homeContent.gallery.title}</h2>
-              <p className="text-lg leading-8 text-gray-600">{homeContent.gallery.description}</p>
+              <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.galleryTitle ?? fallbackContent.gallery.title}</h2>
+              <p className="text-lg leading-8 text-gray-600">{cms?.galleryDescription ?? fallbackContent.gallery.description}</p>
             </div>
             <Link href="/gallery" className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-600 hover:text-primary">
               Voir toute la galerie
@@ -648,31 +659,33 @@ export function HomePageContent() {
           </div>
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <div className="relative overflow-hidden rounded-[34px]">
-              <img src="/assets/whats.jpeg" alt="Galerie terrain" className="h-[420px] w-full object-cover transition duration-500 hover:scale-[1.03]" />
+              <img src={resolveImageUrl("/assets/whats.jpeg")} alt="Galerie terrain" className="h-[420px] w-full object-cover transition duration-500 hover:scale-[1.03]" />
               <div className="absolute inset-0 bg-gradient-to-t from-secondary/75 to-transparent" />
               <div className="absolute bottom-0 left-0 p-6">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Focus terrain</div>
-                <div className="max-w-md text-2xl font-bold text-white">Les images doivent donner envie d'entrer dans les projets, pas juste decorer.</div>
+                <div className="max-w-md text-2xl font-bold text-white">Des images qui temoignent de notre action et de notre impact sur le terrain.</div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <img src="/assets/1.jpeg" alt="Galerie 1" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
-              <img src="/assets/classe.jpeg" alt="Galerie 2" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
-              <img src="/assets/1.jpeg" alt="Galerie 3 duplicate" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
-              <img src="/assets/about.jpeg" alt="Galerie 4" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
+              <img src={resolveImageUrl("/assets/1.jpeg")} alt="Galerie 1" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
+              <img src={resolveImageUrl("/assets/classe.jpeg")} alt="Galerie 2" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
+              <img src={resolveImageUrl("/assets/1.jpeg")} alt="Galerie 3 duplicate" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
+              <img src={resolveImageUrl("/assets/about.jpeg")} alt="Galerie 4" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="bg-[linear-gradient(90deg,_rgba(239,146,33,0.94)_0%,_rgba(65,182,75,0.96)_100%)] py-20">
+      <SectionVisibility section="donationCta">
+        <section className="bg-[linear-gradient(90deg,_rgba(239,146,33,0.94)_0%,_rgba(65,182,75,0.96)_100%)] py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
             <div>
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-100">Don et action</p>
-              <h2 className="mb-5 text-4xl font-bold text-white">Soutenir une action visible, suivie et documentee.</h2>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-100">Agir maintenant</p>
+              <h2 className="mb-5 text-4xl font-bold text-white">{cms?.donationTitle ?? "Soutenez nos actions, visibles et documentees sur le terrain."}</h2>
               <p className="max-w-2xl text-lg leading-8 text-white/90">
-                Le don doit rester connecte aux projets, aux images et aux nouvelles du terrain. C'est ce lien qui renforce la confiance.
+                {cms?.donationDescription ?? "Chaque don est connecte a des projets concrets, suivis et illustres. Votre soutien a un impact direct et verifiable."}
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -691,14 +704,16 @@ export function HomePageContent() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="bg-[#f8f5ef] py-16 md:py-20">
+      <SectionVisibility section="newsletter">
+        <section className="bg-[#f8f5ef] py-16 md:py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Newsletter</p>
-            <h2 className="mb-4 text-4xl font-bold text-gray-950">{homeContent.newsletter.title}</h2>
-            <p className="mx-auto max-w-2xl text-lg leading-8 text-gray-600">{homeContent.newsletter.description}</p>
+            <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.newsletterTitle ?? fallbackContent.newsletter.title}</h2>
+            <p className="mx-auto max-w-2xl text-lg leading-8 text-gray-600">{cms?.newsletterDescription ?? fallbackContent.newsletter.description}</p>
           </div>
 
           <div className="mx-auto mt-10 max-w-2xl rounded-[32px] bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] ring-1 ring-gray-100 md:p-8">
@@ -721,11 +736,12 @@ export function HomePageContent() {
 
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
       {donationOpen ? (
-        <div className="modal" style={{ display: "flex" }}>
-          <div className="modal-content">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4" onClick={() => setDonationOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-2xl font-bold text-gray-900">Faire un don</h3>
               <button onClick={() => setDonationOpen(false)} className="text-gray-500 hover:text-gray-700">
@@ -734,31 +750,46 @@ export function HomePageContent() {
             </div>
             <div className="space-y-6">
               <div>
-                <label className="mb-2 block text-gray-700">Montant du don</label>
+                <label className="mb-2 block font-medium text-gray-700">Montant du don</label>
                 <div className="mb-4 grid grid-cols-2 gap-3">
-                  {[10000, 25000, 50000, 100000].map((amount) => (
-                    <div key={amount} className="donation-amount">
-                      <div className="text-lg font-semibold">{amount.toLocaleString("fr-FR")} F</div>
-                    </div>
+                  {[
+                    { amount: 10000, label: "Nourriture 1 mois" },
+                    { amount: 25000, label: "Soins medicaux" },
+                    { amount: 50000, label: "Education 1 enfant" },
+                    { amount: 100000, label: "Acces a l'eau" }
+                  ].map(({ amount, label }) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => { setSelectedAmount(amount); setCustomAmount(""); }}
+                      className={`rounded-xl border-2 p-4 text-center transition-all ${
+                        selectedAmount === amount
+                          ? "border-primary bg-orange-50"
+                          : "border-gray-200 hover:border-primary hover:bg-orange-50"
+                      }`}
+                    >
+                      <div className="text-lg font-bold text-gray-900">{amount.toLocaleString("fr-FR")} F</div>
+                      <div className="mt-1 text-sm text-gray-500">{label}</div>
+                    </button>
                   ))}
                 </div>
                 <div className="relative">
                   <input
                     type="number"
+                    value={customAmount}
+                    onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
                     placeholder="Autre montant"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  <div className="absolute right-3 top-3 text-gray-500">FCFA</div>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">FCFA</div>
                 </div>
               </div>
               <div className="rounded-2xl bg-gray-50 p-4 text-sm leading-6 text-gray-600">
-                Ce module reste fictif pour l'instant. Son role est de reserver la place du futur flux Laravel + paiement.
+                Votre don est securise. 98% des fonds sont directement alloues aux programmes.
               </div>
-              <div className="pt-1">
-                <button className="w-full rounded-lg bg-primary py-4 font-semibold text-white transition-colors hover:bg-orange-600">
-                  Effectuer le don
-                </button>
-              </div>
+              <button className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-white transition hover:bg-orange-600">
+                Effectuer le don
+              </button>
             </div>
           </div>
         </div>

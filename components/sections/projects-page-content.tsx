@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { projects } from "@/lib/mock-data/projects";
+import { projects as fallbackProjects } from "@/lib/mock-data/projects";
 import { pageContent } from "@/lib/mock-data/ui-content";
+import { api } from "@/lib/api";
 
 const statusFilters = [
   { id: "all", label: "Tous" },
@@ -43,13 +44,19 @@ function projectProgress(goalAmount: number, collectedAmount: number) {
 }
 
 export function ProjectsPageContent() {
+  const [allProjects, setAllProjects] = useState<typeof fallbackProjects>(fallbackProjects);
+  useEffect(() => {
+    api.getProjects().then((res) => {
+      if (res?.data) setAllProjects(res.data);
+    }).catch(() => {});
+  }, []);
   const [activeStatus, setActiveStatus] = useState<(typeof statusFilters)[number]["id"]>("all");
   const [activeTheme, setActiveTheme] = useState<(typeof themeFilters)[number]["id"]>("all");
-  const [selectedId, setSelectedId] = useState(projects[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState(allProjects[0]?.id ?? "");
   const [page, setPage] = useState(1);
 
   const visibleProjects = useMemo(() => {
-    return projects.filter((project) => {
+    return allProjects.filter((project) => {
       const statusOk = activeStatus === "all" || project.status === activeStatus;
       const themeOk = activeTheme === "all" || project.theme === activeTheme;
       return statusOk && themeOk;
@@ -91,13 +98,13 @@ export function ProjectsPageContent() {
     visibleProjects.find((project) => project.id === selectedId) ??
     paginatedProjects[0] ??
     visibleProjects[0] ??
-    projects[0];
+    allProjects[0];
 
   const summary = {
-    total: projects.length,
-    ongoing: projects.filter((project) => project.status === "ongoing").length,
-    completed: projects.filter((project) => project.status === "completed").length,
-    upcoming: projects.filter((project) => project.status === "upcoming").length
+    total: allProjects.length,
+    ongoing: allProjects.filter((project) => project.status === "ongoing").length,
+    completed: allProjects.filter((project) => project.status === "completed").length,
+    upcoming: allProjects.filter((project) => project.status === "upcoming").length
   };
 
   return (

@@ -1,18 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { resolveImageUrl } from "@/lib/image-url";
 
 const baseItems = [
-  { id: "gallery-1", title: "Education", image: "/assets/education.jpeg", category: "education" },
-  { id: "gallery-2", title: "Consultation", image: "/assets/consultation.jpeg", category: "sante" },
-  { id: "gallery-3", title: "Acces a l'eau", image: "/assets/puits.jpeg", category: "eau" },
-  { id: "gallery-4", title: "Terrain", image: "/assets/whats.jpeg", category: "terrain" },
-  { id: "gallery-5", title: "Classe", image: "/assets/classe.jpeg", category: "education" },
-  { id: "gallery-6", title: "Equipe", image: "/assets/about.jpeg", category: "terrain" },
-  { id: "gallery-7", title: "Point d'eau", image: "/assets/3.jpeg", category: "eau" },
-  { id: "gallery-8", title: "Soutien", image: "/assets/educationn.jpeg", category: "education" },
-  { id: "gallery-9", title: "Mobilisation", image: "/assets/partenaire.jpeg", category: "terrain" },
-  { id: "gallery-10", title: "Sante", image: "/assets/santee.jpg", category: "sante" }
+  { id: "gallery-1", title: "Education", image: resolveImageUrl("/assets/education.jpeg"), category: "education" },
+  { id: "gallery-2", title: "Consultation", image: resolveImageUrl("/assets/consultation.jpeg"), category: "sante" },
+  { id: "gallery-3", title: "Acces a l'eau", image: resolveImageUrl("/assets/puits.jpeg"), category: "eau" },
+  { id: "gallery-4", title: "Terrain", image: resolveImageUrl("/assets/whats.jpeg"), category: "terrain" },
+  { id: "gallery-5", title: "Classe", image: resolveImageUrl("/assets/classe.jpeg"), category: "education" },
+  { id: "gallery-6", title: "Equipe", image: resolveImageUrl("/assets/about.jpeg"), category: "terrain" },
+  { id: "gallery-7", title: "Point d'eau", image: resolveImageUrl("/assets/3.jpeg"), category: "eau" },
+  { id: "gallery-8", title: "Soutien", image: resolveImageUrl("/assets/educationn.jpeg"), category: "education" },
+  { id: "gallery-9", title: "Mobilisation", image: resolveImageUrl("/assets/partenaire.jpeg"), category: "terrain" },
+  { id: "gallery-10", title: "Sante", image: resolveImageUrl("/assets/santee.jpg"), category: "sante" }
 ];
 
 const filters = [
@@ -186,7 +187,7 @@ export function GalleryPageContent() {
       </section>
 
       {lightboxItem ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/82 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/80 p-4">
           <div className="w-full max-w-6xl rounded-[34px] bg-white p-4 shadow-2xl">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div className="rounded-full bg-secondary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">

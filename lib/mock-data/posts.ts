@@ -19,7 +19,7 @@ export const posts: Post[] = [
       en: "A field story built around imagery, key figures, and the action timeline to show what was done and what remains.",
       ar: "منشور ميداني قائم على الصور والأرقام الأساسية وتسلسل التدخل لشرح ما تم وما بقي."
     },
-    image: "/assets/alimentaire.jpeg",
+    image: "http://localhost:8001/assets/alimentaire.jpeg",
     category: "terrain",
     location: {
       fr: "Mbour, Senegal",
@@ -48,7 +48,7 @@ export const posts: Post[] = [
       en: "A project update designed to help visitors understand the works, progress, and support need.",
       ar: "تحديث مشروع يساعد الزائر على فهم الأشغال والتقدم والحاجة إلى الدعم."
     },
-    image: "/assets/puits.jpeg",
+    image: "http://localhost:8001/assets/puits.jpeg",
     category: "project-update",
     location: {
       fr: "Kaolack, Senegal",
@@ -77,7 +77,7 @@ export const posts: Post[] = [
       en: "A journal format focused on organization, coordination, and field presence around health actions.",
       ar: "صيغة تحريرية تركز على التنظيم والتنسيق والحضور الميداني حول أنشطة الصحة."
     },
-    image: "/assets/consultation.jpeg",
+    image: "http://localhost:8001/assets/consultation.jpeg",
     category: "association",
     location: {
       fr: "Dakar, Senegal",
@@ -106,7 +106,7 @@ export const posts: Post[] = [
       en: "An editorial entry connecting imagery, school needs, and action paths around education.",
       ar: "مدخل تحريري يربط بين الصور والاحتياجات المدرسية ومسارات العمل حول التعليم."
     },
-    image: "/assets/classe.jpeg",
+    image: "http://localhost:8001/assets/classe.jpeg",
     category: "terrain",
     location: {
       fr: "Diourbel, Senegal",
@@ -135,7 +135,7 @@ export const posts: Post[] = [
       en: "An update focused on an upcoming campaign, needs, logistics, and targeted support intent.",
       ar: "تحديث يركز على حملة قادمة واحتياجاتها ولوجستياتها ونية الدعم الموجه."
     },
-    image: "/assets/1.jpeg",
+    image: "http://localhost:8001/assets/1.jpeg",
     category: "project-update",
     location: {
       fr: "Thies, Senegal",
@@ -164,7 +164,7 @@ export const posts: Post[] = [
       en: "An association post about coordination, partners, local networks, and field effectiveness.",
       ar: "منشور مؤسسي حول التنسيق والشركاء والنسج المحلي وفعالية العمل الميداني."
     },
-    image: "/assets/partenaire.jpeg",
+    image: "http://localhost:8001/assets/partenaire.jpeg",
     category: "association",
     location: {
       fr: "Saint-Louis, Senegal",
@@ -193,7 +193,7 @@ export const posts: Post[] = [
       en: "A field article centered on observation, needs, and the clarity of humanitarian priorities in another geographic context.",
       ar: "مقال ميداني يركز على الملاحظة والاحتياجات ووضوح الأولويات الإنسانية في سياق جغرافي آخر."
     },
-    image: "/assets/whats.jpeg",
+    image: "http://localhost:8001/assets/whats.jpeg",
     category: "terrain",
     location: {
       fr: "Niamey, Niger",
@@ -222,7 +222,7 @@ export const posts: Post[] = [
       en: "A framing publication explaining why the journal, gallery, and project pages need to work together.",
       ar: "منشور تأطيري يشرح لماذا يجب أن تعمل المدونة والمعرض وصفحات المشاريع معا."
     },
-    image: "/assets/about.jpeg",
+    image: "http://localhost:8001/assets/about.jpeg",
     category: "association",
     location: {
       fr: "Dakar, Senegal",

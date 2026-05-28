@@ -1,10 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { loadGlobalSettings } from "@/lib/admin/global-settings";
 
 export function FloatingDonateButton() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [ctaText, setCtaText] = useState("Faire un don");
+
+  useEffect(() => {
+    loadGlobalSettings().then((settings) => {
+      setVisible(settings.showFloatingButton && settings.floatingButtonPages.includes(pathname));
+      setCtaText(settings.donationCtaText);
+    });
+  }, [pathname]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -19,65 +31,79 @@ export function FloatingDonateButton() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  if (!visible) return null;
+
   return (
     <>
       <div className="fixed bottom-5 right-5 z-[60] flex items-center gap-3">
         <button
           onClick={() => setOpen(true)}
-          className={`floating-donate-button flex items-center gap-3 rounded-full border border-white/60 bg-primary px-4 py-3 text-left text-white shadow-2xl transition-all hover:bg-orange-600 md:px-5 ${
+          className={`floating-donate-button rounded-full border border-white/60 bg-primary px-5 py-3 text-sm font-semibold text-white shadow-2xl transition-all hover:brightness-90 md:text-base ${
             mounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/18 text-xs font-bold uppercase tracking-[0.14em]">
-            Don
-          </span>
-          <span className="pr-1">
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-100">Donation</span>
-            <span className="block text-sm font-semibold md:text-base">Faire une donation</span>
-          </span>
+          {ctaText}
         </button>
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-4 md:items-center">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-primary/70 p-4 md:items-center">
           <div className="w-full max-w-lg rounded-[32px] bg-white p-6 shadow-2xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Don</div>
-                <h2 className="text-3xl font-bold text-gray-950">Soutenir les actions humanitaires</h2>
-                <p className="mt-3 text-sm leading-6 text-gray-600">
-                  Ce module est encore simulé, mais il prépare un vrai parcours de don lié aux projets, aux images et aux mises à jour du terrain.
+                <h2 className="text-2xl font-bold text-gray-950 md:text-3xl">Chaque don sauve des vies</h2>
+                <p className="mt-2 text-sm leading-6 text-gray-500">
+                  Votre générosité permet de nourrir des familles, soigner des enfants et construire un avenir.
                 </p>
               </div>
-              <button onClick={() => setOpen(false)} className="rounded-full bg-gray-100 px-4 py-2 font-semibold text-gray-700">
-                Fermer
+              <button
+                onClick={() => setOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+              >
+                ✕
               </button>
             </div>
 
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-gray-400">Choisissez un montant</p>
             <div className="grid grid-cols-2 gap-3">
-              {[10000, 25000, 50000, 100000].map((amount) => (
-                <button key={amount} className="donation-amount">
-                  <div className="text-lg font-semibold">{amount.toLocaleString("fr-FR")} FCFA</div>
-                  <div className="mt-1 text-sm text-gray-500">Affectation humanitaire</div>
+              {[
+                { amount: 5000, impact: "Un repas pour 10 familles" },
+                { amount: 10000, impact: "Kits scolaires pour 5 enfants" },
+                { amount: 25000, impact: "Soins médicaux d'urgence" },
+                { amount: 50000, impact: "Parrainage d'un projet entier" }
+              ].map(({ amount, impact }) => (
+                <button
+                  key={amount}
+                  className="rounded-xl border-2 border-gray-100 px-4 py-4 text-left transition-all hover:border-primary hover:bg-orange-50"
+                >
+                  <div className="text-lg font-bold text-gray-900">{amount.toLocaleString("fr-FR")} FCFA</div>
+                  <div className="mt-1 text-xs leading-tight text-gray-500">{impact}</div>
                 </button>
               ))}
             </div>
 
-            <div className="mt-5">
+            <div className="mt-4">
               <input
                 type="number"
-                placeholder="Autre montant"
-                className="w-full rounded-xl border border-gray-300 px-4 py-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Montant personnalisé"
+                className="w-full rounded-xl border-2 border-gray-100 px-4 py-4 text-gray-900 placeholder-gray-400 transition-colors focus:border-primary focus:outline-none focus:ring-0"
               />
             </div>
 
+            <div className="mt-4 flex items-center gap-3 rounded-xl bg-secondary/10 px-4 py-3">
+              <input type="checkbox" id="monthly" className="h-4 w-4 accent-secondary" />
+              <label htmlFor="monthly" className="text-sm font-medium text-gray-700">
+                Mensualiser mon don
+              </label>
+            </div>
+
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <button className="rounded-button bg-gray-950 px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-primary">
-                Continuer le don
+              <button className="rounded-button bg-primary px-6 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:brightness-90">
+                Soutenir maintenant
               </button>
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-button border border-gray-300 px-6 py-4 text-lg font-semibold text-gray-900 transition-colors hover:border-primary hover:text-primary"
+                className="rounded-button border-2 border-gray-200 px-6 py-4 text-lg font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800"
               >
                 Plus tard
               </button>

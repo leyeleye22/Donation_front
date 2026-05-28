@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { posts } from "@/lib/mock-data/posts";
+import { posts as fallbackPosts } from "@/lib/mock-data/posts";
+import { api } from "@/lib/api";
 
 const categoryFilters = [
   { id: "all", label: "Tout" },
@@ -21,10 +22,16 @@ const categoryLabel: Record<(typeof categoryFilters)[number]["id"], string> = {
 const PAGE_SIZE = 6;
 
 export function JournalPageContent() {
-  const featuredPosts = posts.slice(0, 3);
+  const [allPosts, setAllPosts] = useState<typeof fallbackPosts>(fallbackPosts);
+  useEffect(() => {
+    api.getPosts().then((res) => {
+      if (res?.data) setAllPosts(res.data);
+    }).catch(() => {});
+  }, []);
+  const featuredPosts = allPosts.slice(0, 3);
   const [heroIndex, setHeroIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState<(typeof categoryFilters)[number]["id"]>("all");
-  const [selectedPostId, setSelectedPostId] = useState(posts[0]?.id ?? "");
+  const [selectedPostId, setSelectedPostId] = useState(allPosts[0]?.id ?? "");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -37,7 +44,7 @@ export function JournalPageContent() {
   }, [featuredPosts.length]);
 
   const visiblePosts = useMemo(() => {
-    return posts.filter((post) => activeCategory === "all" || post.category === activeCategory);
+    return allPosts.filter((post) => activeCategory === "all" || post.category === activeCategory);
   }, [activeCategory]);
 
   const totalPages = Math.max(1, Math.ceil(visiblePosts.length / PAGE_SIZE));
@@ -71,15 +78,15 @@ export function JournalPageContent() {
     }
   }, [page, totalPages]);
 
-  const heroPost = featuredPosts[heroIndex] ?? posts[0];
+  const heroPost = featuredPosts[heroIndex] ?? allPosts[0];
   const selectedPost =
     paginatedPosts.find((post) => post.id === selectedPostId) ??
     visiblePosts.find((post) => post.id === selectedPostId) ??
     paginatedPosts[0] ??
     visiblePosts[0] ??
-    posts[0];
+    allPosts[0];
 
-  const imageStrip = [...posts, ...posts];
+  const imageStrip = [...allPosts, ...allPosts];
 
   return (
     <div className="bg-white">
@@ -98,15 +105,15 @@ export function JournalPageContent() {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-[24px] border border-primary/16 bg-primary/6 px-5 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                <div className="text-3xl font-bold text-gray-950">{posts.length}</div>
+                <div className="text-3xl font-bold text-gray-950">{allPosts.length}</div>
                 <div className="mt-1 text-sm text-gray-600">Articles visibles</div>
               </div>
               <div className="rounded-[24px] border border-secondary/14 bg-white px-5 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                <div className="text-3xl font-bold text-gray-950">{posts.filter((post) => post.category === "terrain").length}</div>
+                <div className="text-3xl font-bold text-gray-950">{allPosts.filter((post) => post.category === "terrain").length}</div>
                 <div className="mt-1 text-sm text-gray-600">Recits terrain</div>
               </div>
               <div className="rounded-[24px] border border-secondary/14 bg-white px-5 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
-                <div className="text-3xl font-bold text-gray-950">{posts.filter((post) => post.category === "project-update").length}</div>
+                <div className="text-3xl font-bold text-gray-950">{allPosts.filter((post) => post.category === "project-update").length}</div>
                 <div className="mt-1 text-sm text-gray-600">Suivis projet</div>
               </div>
             </div>

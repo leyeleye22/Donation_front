@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ADMIN_SESSION_KEY, type MockAdminSession } from "@/lib/admin-auth";
+import { checkAdminSession } from "@/lib/admin-auth";
 
 export function AdminSessionGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -15,22 +15,13 @@ export function AdminSessionGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const rawSession = window.localStorage.getItem(ADMIN_SESSION_KEY);
-    if (!rawSession) {
-      router.replace("/login");
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(rawSession) as MockAdminSession;
-      if (!parsed.email) {
-        throw new Error("Invalid session");
+    checkAdminSession().then((ok) => {
+      if (!ok) {
+        router.replace("/login");
+      } else {
+        setReady(true);
       }
-      setReady(true);
-    } catch {
-      window.localStorage.removeItem(ADMIN_SESSION_KEY);
-      router.replace("/login");
-    }
+    });
   }, [pathname, router]);
 
   if (!ready) {

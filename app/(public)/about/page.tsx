@@ -1,22 +1,33 @@
+"use client";
+
 import Link from "next/link";
-import { aboutPageContent } from "@/lib/mock-data/page-sections";
+import { SectionVisibility } from "@/components/ui/section-visibility";
+import { useEffect, useState } from "react";
+import { loadAboutContent, type AboutEditorContent, defaultAboutEditorContent } from "@/lib/admin/about-content";
+import { resolveImageUrl } from "@/lib/image-url";
 
 export default function AboutPage() {
+  const [cms, setCms] = useState<AboutEditorContent | null>(null);
+  useEffect(() => { loadAboutContent().then(setCms); }, []);
+
+  if (!cms) return <div className="bg-white min-h-screen" />;
+
   return (
     <div className="bg-white">
-      <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.14),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.18),_transparent_26%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_56%,_#fff7ed_100%)]">
+      <SectionVisibility section="hero">
+        <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.14),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.18),_transparent_26%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_56%,_#fff7ed_100%)]">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-primary">
-              {aboutPageContent.hero.eyebrow}
+              {cms.heroEyebrow}
             </p>
             <h1 className="max-w-4xl text-5xl font-bold leading-[1.05] text-gray-950 md:text-6xl">
-              {aboutPageContent.hero.title}
+              {cms.heroTitle}
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">{aboutPageContent.hero.description}</p>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">{cms.heroDescription}</p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {aboutPageContent.heroStats.map((item, index) => (
+              {cms.stats.map((item, index) => (
                 <div
                   key={item.label}
                   className={`rounded-[24px] border p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] ${
@@ -33,8 +44,8 @@ export default function AboutPage() {
           <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="relative overflow-hidden rounded-[34px] shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
               <img
-                src={aboutPageContent.association.image}
-                alt={aboutPageContent.association.imageAlt}
+                src={cms.associationImage}
+                alt={"Association sur le terrain"}
                 className="h-[520px] w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/15 to-transparent" />
@@ -51,7 +62,7 @@ export default function AboutPage() {
             </div>
 
             <div className="grid gap-4">
-              {aboutPageContent.association.gallery.slice(1).map((image, index) => (
+              {[resolveImageUrl("/assets/about.jpeg"), resolveImageUrl("/assets/consultation.jpeg"), resolveImageUrl("/assets/classe.jpeg"), resolveImageUrl("/assets/whats.jpeg")].slice(1).map((image, index) => (
                 <img
                   key={image}
                   src={image}
@@ -64,14 +75,16 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
-      <section className="py-20">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
+      <SectionVisibility section="mission">
+        <section className="py-20">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
           <div className="overflow-hidden rounded-[34px] shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
             <img
-              src={aboutPageContent.associationProfile.portrait}
-              alt={aboutPageContent.associationProfile.name}
+              src={cms.portrait}
+              alt={"Entr'aide pour Servir l'Humanite"}
               className="h-full min-h-[520px] w-full object-cover"
             />
           </div>
@@ -80,10 +93,10 @@ export default function AboutPage() {
             <div className="rounded-[32px] bg-[#f7fbf4] p-8">
               <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Ce que cette page doit dire</div>
               <h3 className="text-3xl font-bold text-gray-950">L&apos;association d&apos;abord, parce que c&apos;est elle qui porte le sens.</h3>
-              <p className="mt-4 text-base font-medium text-secondary">{aboutPageContent.associationProfile.name}</p>
-              <p className="mt-2 text-base font-medium text-secondary">{aboutPageContent.associationProfile.role}</p>
+              <p className="mt-4 text-base font-medium text-secondary">{"Entr'aide pour Servir l'Humanite"}</p>
+              <p className="mt-2 text-base font-medium text-secondary">{"Association humanitaire et solidaire"}</p>
               <div className="mt-4 space-y-4 text-lg leading-8 text-gray-600">
-                {aboutPageContent.associationProfile.story.map((paragraph) => (
+                {cms.story.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
               </div>
@@ -105,23 +118,24 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </SectionVisibility>
 
       <section className="bg-[#f8f5ef] py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 max-w-3xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">
-              {aboutPageContent.founder.badge}
+              {cms.founderBadge}
             </p>
-            <h2 className="text-4xl font-bold text-gray-950">{aboutPageContent.founder.title}</h2>
-            <p className="mt-6 text-lg leading-8 text-gray-600">{aboutPageContent.founder.subtitle}</p>
+            <h2 className="text-4xl font-bold text-gray-950">{cms.founderTitle}</h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600">{cms.founderSubtitle}</p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
             <div className="grid gap-5">
               <div className="overflow-hidden rounded-[34px] bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)] ring-1 ring-gray-100">
                 <img
-                  src={aboutPageContent.founder.portrait}
+                  src={cms.founderPortrait}
                   alt="Portrait fondateur"
                   className="h-full min-h-[520px] w-full object-cover"
                 />
@@ -159,7 +173,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid gap-6">
-            {aboutPageContent.actionStories.map((story, index) => (
+            {cms.actionStories.map((story, index) => (
               <div
                 key={story.title}
                 className={`grid gap-6 rounded-[32px] border border-secondary/10 p-5 shadow-[0_14px_40px_rgba(15,23,42,0.06)] md:p-6 lg:grid-cols-[0.95fr_1.05fr] ${
@@ -193,7 +207,7 @@ export default function AboutPage() {
               </div>
 
               <div className="grid gap-5 p-8">
-                {aboutPageContent.values.map((value, index) => (
+                {cms.values.map((value, index) => (
                   <div
                     key={value.title}
                     className={`rounded-[26px] border p-6 ${
@@ -224,9 +238,9 @@ export default function AboutPage() {
               </div>
 
               <div className="space-y-8 p-8">
-                {aboutPageContent.timeline.map((item, index) => (
+                {cms.timeline.map((item, index) => (
                   <div key={item.year} className="relative pl-12">
-                    {index !== aboutPageContent.timeline.length - 1 ? (
+                    {index !== cms.timeline.length - 1 ? (
                       <div className="absolute left-[19px] top-12 h-[calc(100%+1.5rem)] w-[2px] bg-gradient-to-b from-primary/40 to-secondary/30" />
                     ) : null}
                     <div className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-[0_10px_24px_rgba(239,146,33,0.25)]">
@@ -251,21 +265,21 @@ export default function AboutPage() {
             <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
               <div>
                 <div className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-orange-100">Credibilite</div>
-                <h2 className="text-4xl font-bold">{aboutPageContent.callout.title}</h2>
-                <p className="mt-5 max-w-2xl text-lg leading-8 text-white/90">{aboutPageContent.callout.description}</p>
+                <h2 className="text-4xl font-bold">{cms.calloutTitle}</h2>
+                <p className="mt-5 max-w-2xl text-lg leading-8 text-white/90">{cms.calloutDescription}</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Link
                   href="/projects"
                   className="rounded-button bg-white px-6 py-3 text-center text-base font-semibold text-primary transition hover:bg-gray-100"
                 >
-                  {aboutPageContent.callout.primaryCta}
+                  {cms.calloutPrimaryCta}
                 </Link>
                 <Link
                   href="/#multimedia"
                   className="rounded-button border-2 border-white bg-transparent px-6 py-3 text-center text-base font-semibold text-white transition hover:bg-white hover:text-primary"
                 >
-                  {aboutPageContent.callout.secondaryCta}
+                  {cms.calloutSecondaryCta}
                 </Link>
               </div>
             </div>

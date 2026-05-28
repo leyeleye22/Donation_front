@@ -18,19 +18,19 @@ export const aboutPageContent = {
       "Il mentionne aussi une reconnaissance officielle par le Ministere de l'Interieur du Senegal en date du 2 avril 2021.",
       "Son champ d'action couvre le Senegal ainsi que le Niger, avec une attention portee aux populations vulnerables, a l'acces a l'eau, a l'education, a la sante et a l'appui communautaire."
     ],
-    image: "/assets/about.jpeg",
+    image: "http://localhost:8001/assets/about.jpeg",
     imageAlt: "Association sur le terrain",
     gallery: [
-      "/assets/about.jpeg",
-      "/assets/consultation.jpeg",
-      "/assets/classe.jpeg",
-      "/assets/whats.jpeg"
+      "http://localhost:8001/assets/about.jpeg",
+      "http://localhost:8001/assets/consultation.jpeg",
+      "http://localhost:8001/assets/classe.jpeg",
+      "http://localhost:8001/assets/whats.jpeg"
     ]
   },
   associationProfile: {
     name: "Entr'aide pour Servir l'Humanite",
     role: "Association humanitaire et solidaire",
-    portrait: "/assets/about.jpeg",
+    portrait: "http://localhost:8001/assets/about.jpeg",
     story: [
       "Entr'aide pour Servir l'Humanite est pensee ici comme une organisation de terrain qui agit d'abord pour repondre a des besoins concrets. La page a propos doit faire comprendre son identite, son ancrage et sa promesse de service avant meme d'entrer dans les details des projets.",
       "Son histoire s'inscrit dans une logique simple: structurer une action utile, la faire reconnaitre, puis la rendre visible a travers des projets, des images, des nouvelles et des points de repere clairs pour le public.",
@@ -54,11 +54,11 @@ export const aboutPageContent = {
         text: "La date de creation, la reconnaissance officielle et l'orientation des actions menees au Senegal et au Niger."
       },
       {
-        label: "Ce qui reste a brancher",
+        label: "Projets en cours",
         text: "Nom complet, photo officielle, citation fondatrice, parcours et responsabilites institutionnelles."
       }
     ],
-    portrait: "/assets/partenaire.jpeg",
+    portrait: "http://localhost:8001/assets/partenaire.jpeg",
     quote:
       "La section fondateur doit inspirer confiance sans inventer de biographie. Elle est prete pour recevoir le contenu officiel."
   },
@@ -100,23 +100,23 @@ export const aboutPageContent = {
   timeline: [
     { year: "2018", title: "Creation de l'association", text: "Lancement de la structure et definition de la mission humanitaire." },
     { year: "2021", title: "Reconnaissance officielle", text: "Reconnaissance par le Ministere de l'Interieur du Senegal selon le site existant." },
-    { year: "Aujourd'hui", title: "Structuration editoriale", text: "Mise en place d'un front plus solide pour montrer projets, journal et impact." }
+    { year: "Aujourd'hui", title: "Structuration editoriale", text: "Mise en place d'une structure solide pour montrer projets, journal et impact." }
   ],
   actionStories: [
     {
       title: "Des actions qui doivent etre expliquees, pas seulement montrees",
       text: "Les photos de terrain prennent de la valeur quand elles sont accompagnees d'un contexte: ou l'action se passe, quel besoin est traite, qui en beneficie et pourquoi cela compte dans la mission de l'association.",
-      image: "/assets/consultation.jpeg"
+      image: "http://localhost:8001/assets/consultation.jpeg"
     },
     {
       title: "Informer sur les priorites humanitaires",
       text: "Cette page peut aussi servir a rappeler les axes d'intervention. Les scenes de sante, d'education ou d'acces a l'eau aident a faire comprendre la nature concrete des engagements portes par l'association.",
-      image: "/assets/classe.jpeg"
+      image: "http://localhost:8001/assets/classe.jpeg"
     },
     {
       title: "Montrer une presence terrain credible",
       text: "L'information devient plus credible quand le texte et l'image avancent ensemble. C'est cette logique qui doit guider la page a propos: mission, figures de reference, actions et preuves visuelles reunies dans un meme parcours.",
-      image: "/assets/whats.jpeg"
+      image: "http://localhost:8001/assets/whats.jpeg"
     }
   ],
   callout: {
@@ -169,15 +169,15 @@ export const contactPageContent = {
   faq: [
     {
       question: "Comment suivre l'evolution d'un projet ?",
-      answer: "Le front est maintenant structure pour relier projets, journal et galerie. Les futures mises a jour CMS ou Laravel viendront completer ce suivi."
+      answer: "Le site est structure pour relier projets, journal et galerie et offrir un suivi transparent de chaque action."
     },
     {
       question: "Comment proposer un partenariat ?",
-      answer: "Le formulaire de contact peut deja simuler ce parcours. Plus tard, il sera branche a un vrai workflow Laravel."
+      answer: "Le formulaire de contact envoie votre message directement a l'equipe de l'association."
     },
     {
       question: "Comment savoir si un don sera affecte a un projet ?",
-      answer: "La logique du front prepare deja des points d'entree par projet. La ventilation exacte sera definie quand le back donation sera branche."
+      answer: "Chaque projet dispose d'une page detaillee avec suivi de progression et acces au don."
     }
   ]
 } as const;
@@ -187,17 +187,17 @@ export const galleryPageContent = {
     {
       title: "Education",
       text: "Scenarios de soutien scolaire, distribution de materiel et vie des espaces d'apprentissage.",
-      image: "/assets/education.jpeg"
+      image: "http://localhost:8001/assets/education.jpeg"
     },
     {
       title: "Sante",
       text: "Consultations, prevention, relais de proximite et structures de soin communautaires.",
-      image: "/assets/consultation.jpeg"
+      image: "http://localhost:8001/assets/consultation.jpeg"
     },
     {
       title: "Terrain",
       text: "Scenes de terrain, contexte local et documentation visuelle des actions menees.",
-      image: "/assets/whats.jpeg"
+      image: "http://localhost:8001/assets/whats.jpeg"
     }
   ]
 } as const;
