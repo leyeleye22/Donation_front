@@ -61,8 +61,9 @@ function ItemsEditor({ items, onChange }: {
 export function ContactPageEditor() {
   const [content, setContent] = useState<ContactEditorContent>(defaultContactEditorContent);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
-  useEffect(() => { loadContactContent().then(setContent); }, []);
+  useEffect(() => { loadContactContent().then(setContent).catch(console.error); }, []);
 
   useEffect(() => { if (!saved) return; const t = setTimeout(() => setSaved(false), 1800); return () => clearTimeout(t); }, [saved]);
 
@@ -71,10 +72,14 @@ export function ContactPageEditor() {
   }
 
   async function handleSave() {
+    setSaveError("");
     try {
       await api.updatePage('contact', content);
       setSaved(true);
-    } catch {}
+    } catch (e: any) {
+      setSaveError(e?.message || "Erreur lors de l'enregistrement.");
+      console.error("ContactPageEditor: save failed", e);
+    }
   }
 
   function handleReset() {
@@ -151,6 +156,7 @@ export function ContactPageEditor() {
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
             {saved ? <span className="font-semibold text-secondary">Modifications enregistrees.</span> : null}
+            {saveError ? <span className="ml-2 font-semibold text-red-500">{saveError}</span> : null}
           </div>
           <div className="flex gap-3">
             <button onClick={handleReset} className="rounded-button border border-secondary/16 bg-white px-5 py-3 text-sm font-semibold text-secondary hover:bg-secondary/6">Reinitialiser</button>

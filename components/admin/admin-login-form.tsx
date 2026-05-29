@@ -91,9 +91,6 @@ export function AdminLoginForm() {
             </button>
           </form>
 
-          <div className="mt-4 rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-3 text-center text-xs text-gray-400">
-            <span className="font-medium text-gray-500">Identifiants :</span> admin@entraide-humanitaire.org / Admin2026!
-          </div>
         </div>
 
         <p className="mt-6 text-center text-xs text-gray-400">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { api } from "@/lib/api";
 
 type GalleryPhoto = {
@@ -70,16 +70,20 @@ export default function AdminGalleryPage() {
   const [viewerPhoto, setViewerPhoto] = useState<GalleryPhoto | null>(null);
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlock, setShowNewBlock] = useState(false);
+  const [pageOffsets, setPageOffsets] = useState<Record<string, number>>({});
 
+  const PHOTOS_PER_PAGE = 8;
 
-  useEffect(() => {
+  const loadBlocks = useCallback(() => {
     api.getGallery().then((data) => {
-      if (Array.isArray(data) && data.length > 0) {
+      const items = Array.isArray(data) ? data : data?.data ?? [];
+      if (items.length > 0) {
         const grouped: Record<string, GalleryBlock> = {};
-        for (const item of data) {
+        for (const item of items) {
           const title = item.title?.fr || item.title || "";
-          const image = item.image || item.url || "";
-          const cat = (item.category?.[1] || item.category?.[0] || "general") as string;
+          const image = item.image || item.file_path || "";
+          const cats: string[] = item.categories ?? [];
+          const cat = cats[0] || "general";
           if (!grouped[cat]) {
             grouped[cat] = { id: cat, name: cat.charAt(0).toUpperCase() + cat.slice(1), photos: [], collapsed: false };
           }
@@ -87,23 +91,35 @@ export default function AdminGalleryPage() {
         }
         setBlocks(Object.values(grouped));
       }
-    });
+    }).catch((e) => { console.error("AdminGallery: failed to load gallery", e); });
   }, []);
+
+  useEffect(() => { loadBlocks(); }, [loadBlocks]);
 
   function toggleCollapse(id: string) {
     setBlocks(blocks.map((b) => (b.id === id ? { ...b, collapsed: !b.collapsed } : b)));
   }
 
-  function addBlock() {
+  async function addBlock() {
     if (!newBlockName.trim()) return;
     const id = newBlockName.toLowerCase().replace(/\s+/g, "-");
     if (blocks.find((b) => b.id === id)) return;
-    setBlocks([...blocks, { id, name: newBlockName.trim(), photos: [], collapsed: false }]);
+    try {
+      await api.createCategory({ name: newBlockName.trim(), slug: id, type: "project" });
+      await loadBlocks();
+    } catch {}
     setNewBlockName("");
     setShowNewBlock(false);
   }
 
-  function deleteBlock(id: string) {
+  async function deleteBlock(id: string) {
+    if (!confirm(`Supprimer le bloc "${id}" et toutes ses photos ?`)) return;
+    try {
+      await api.deleteCategory(id);
+      for (const photo of blocks.find((b) => b.id === id)?.photos ?? []) {
+        await api.deleteGalleryItem(photo.id).catch((e) => { console.error("AdminGallery: failed to delete photo", e); });
+      }
+    } catch {}
     setBlocks(blocks.filter((b) => b.id !== id));
   }
 
@@ -114,15 +130,16 @@ export default function AdminGalleryPage() {
     input.multiple = true;
     input.onchange = async () => {
       const files = Array.from(input.files || []);
-      const uploads = files
-        .filter((f) => f.type.startsWith("image/"))
-        .map((f) => api.uploadMedia(f).then((res) => ({
-          id: res.id || `photo-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          title: f.name.replace(/\.[^/.]+$/, ""),
-          image: res.url || res.image || "",
-        })));
-      const newPhotos = await Promise.all(uploads);
-      setBlocks(blocks.map((b) => (b.id === blockId ? { ...b, photos: [...newPhotos, ...b.photos] } : b)));
+      for (const file of files.filter((f) => f.type.startsWith("image/"))) {
+        try {
+          await api.uploadMedia(
+            file,
+            { fr: file.name.replace(/\.[^/.]+$/, "") },
+            [blockId]
+          );
+        } catch {}
+      }
+      await loadBlocks();
     };
     input.click();
   }
@@ -134,20 +151,36 @@ export default function AdminGalleryPage() {
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file || !file.type.startsWith("image/")) return;
-      const res = await api.uploadMedia(file);
-      setBlocks(blocks.map((b) => ({
-        ...b,
-        photos: b.photos.map((p) => (p.id === photoId ? { ...p, image: res.url || res.image || "" } : p)),
-      })));
+      try {
+        const res = await api.uploadMedia(file);
+        await api.updateGalleryItem(photoId, { file_path: res.file_path || res.url || res.image || "" });
+      } catch {}
+      await loadBlocks();
     };
     input.click();
   }
 
   async function deletePhoto(photoId: string) {
+    if (!confirm("Supprimer cette photo ?")) return;
     try {
       await api.deleteGalleryItem(photoId);
+      setBlocks(blocks.map((b) => ({ ...b, photos: b.photos.filter((p) => p.id !== photoId) })));
     } catch {}
-    setBlocks(blocks.map((b) => ({ ...b, photos: b.photos.filter((p) => p.id !== photoId) })));
+  }
+
+  function getPaginatedPhotos(blockId: string, photos: GalleryPhoto[]) {
+    const offset = pageOffsets[blockId] || 0;
+    return photos.slice(offset, offset + PHOTOS_PER_PAGE);
+  }
+
+  function nextPage(blockId: string, total: number) {
+    const offset = (pageOffsets[blockId] || 0) + PHOTOS_PER_PAGE;
+    if (offset < total) setPageOffsets({ ...pageOffsets, [blockId]: offset });
+  }
+
+  function prevPage(blockId: string) {
+    const offset = Math.max(0, (pageOffsets[blockId] || 0) - PHOTOS_PER_PAGE);
+    setPageOffsets({ ...pageOffsets, [blockId]: offset });
   }
 
   const totalPhotos = blocks.reduce((sum, b) => sum + b.photos.length, 0);
@@ -172,12 +205,12 @@ export default function AdminGalleryPage() {
           <input
             value={newBlockName}
             onChange={(e) => setNewBlockName(e.target.value)}
-            placeholder="Nom du bloc (ex: Forages, Écoles...)"
+            placeholder="Nom du bloc (ex: Forages, Ecoles...)"
             className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
             onKeyDown={(e) => e.key === "Enter" && addBlock()}
           />
           <button onClick={addBlock} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:brightness-90">
-            Cr&eacute;er
+            Creer
           </button>
           <button onClick={() => { setShowNewBlock(false); setNewBlockName(""); }} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
             Annuler
@@ -187,7 +220,7 @@ export default function AdminGalleryPage() {
 
       {blocks.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-16 text-gray-400">
-          <p className="text-sm">Aucun bloc. Cr&eacute;ez-en un.</p>
+          <p className="text-sm">Aucun bloc. Creez-en un.</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -226,17 +259,34 @@ export default function AdminGalleryPage() {
                   {block.photos.length === 0 ? (
                     <p className="py-8 text-center text-sm text-gray-400">Aucune photo. Cliquez sur &quot;+ Ajouter&quot;.</p>
                   ) : (
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                      {block.photos.map((photo) => (
-                        <PhotoCard
-                          key={photo.id}
-                          photo={photo}
-                          onView={setViewerPhoto}
-                          onReplace={replacePhoto}
-                          onDelete={deletePhoto}
-                        />
-                      ))}
-                    </div>
+                    <>
+                      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {getPaginatedPhotos(block.id, block.photos).map((photo) => (
+                          <PhotoCard
+                            key={photo.id}
+                            photo={photo}
+                            onView={setViewerPhoto}
+                            onReplace={replacePhoto}
+                            onDelete={deletePhoto}
+                          />
+                        ))}
+                      </div>
+                      {block.photos.length > PHOTOS_PER_PAGE ? (
+                        <div className="mt-4 flex items-center justify-between border-t border-gray-50 pt-3">
+                          <p className="text-xs text-gray-500">
+                            {Math.min((pageOffsets[block.id] || 0) + 1, block.photos.length)}&ndash;{Math.min((pageOffsets[block.id] || 0) + PHOTOS_PER_PAGE, block.photos.length)} sur {block.photos.length}
+                          </p>
+                          <div className="flex gap-1">
+                            <button onClick={() => prevPage(block.id)} disabled={!(pageOffsets[block.id] || 0)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+                              Precedent
+                            </button>
+                            <button onClick={() => nextPage(block.id, block.photos.length)} disabled={(pageOffsets[block.id] || 0) + PHOTOS_PER_PAGE >= block.photos.length} className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+                              Suivant
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </>
                   )}
                 </div>
               )}

@@ -1,25 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { projects } from "@/lib/mock-data/projects";
-import { pageContent } from "@/lib/mock-data/ui-content";
 
-const fakeUpdates: Record<string, string[]> = {
-  water: [
-    "Reperage des zones prioritaires et validation des besoins locaux.",
-    "Preparation de la logistique terrain et coordination avec les relais communautaires.",
-    "Documentation photo et publication des prochaines etapes dans le journal."
-  ],
-  education: [
-    "Inventaire des besoins en kits et materiel pedagogique.",
-    "Organisation d'une phase d'accompagnement et de suivi des structures partenaires.",
-    "Mise en avant des prochaines publications terrain dans la section journal."
-  ],
-  health: [
-    "Renforcement de la prevention et des relais de proximite.",
-    "Coordination des consultations et circulation des informations utiles.",
-    "Synthese des actions prevues pour la prochaine mise a jour projet."
-  ]
-};
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api";
 
 const themeLabel: Record<string, string> = {
   education: "Education",
@@ -35,26 +17,49 @@ const statusLabel: Record<string, string> = {
   upcoming: "A venir"
 };
 
+function toLocalized(val: any): { fr: string } {
+  if (!val) return { fr: "" };
+  if (typeof val === "string") return { fr: val };
+  return { fr: val.fr || "" };
+}
+
+function resolveImageUrl(path: string): string {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const base = API.replace(/\/api\/?$/, "");
+  return `${base}${path.startsWith("/") ? path : "/" + path}`;
+}
+
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const project = projects.find((item) => item.slug === slug);
 
-  if (!project) {
-    notFound();
-  }
+  let project: any = null;
+  try {
+    const res = await fetch(`${API}/projects?per_page=50`, { cache: "no-store" });
+    const body = await res.json();
+    project = (body.data || []).find((item: any) => item.slug === slug);
+  } catch {}
 
-  const progress = Math.round((project.collectedAmount / project.goalAmount) * 100);
-  const updates = fakeUpdates[project.theme] ?? [];
-  const relatedImages = [project.coverImage, "http://localhost:8001/assets/whats.jpeg", "http://localhost:8001/assets/about.jpeg"];
+  if (!project) notFound();
+
+  const title = toLocalized(project.title);
+  const description = toLocalized(project.description);
+  const location = toLocalized(project.location);
+  const beneficiaryLabel = toLocalized(project.beneficiary_label ?? project.beneficiaryLabel);
+  const goalAmount = Number(project.goal_amount ?? project.goalAmount ?? 0);
+  const collectedAmount = Number(project.collected_amount ?? project.collectedAmount ?? 0);
+  const coverImage = resolveImageUrl(project.cover_image ?? project.coverImage ?? "");
+  const progress = goalAmount ? Math.round((collectedAmount / goalAmount) * 100) : 0;
+  const relatedImages = [coverImage, resolveImageUrl("/assets/whats.jpeg"), resolveImageUrl("/assets/about.jpeg")];
 
   return (
     <div className="bg-white">
       <section className="border-b border-gray-100 bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <div className="max-w-3xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">{pageContent.projectDetail.eyebrow}</p>
-            <h1 className="text-5xl font-bold leading-tight text-gray-950">{project.title.fr}</h1>
-            <p className="mt-6 text-lg leading-8 text-gray-600">{project.description.fr}</p>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Projet</p>
+            <h1 className="text-5xl font-bold leading-tight text-gray-950">{title.fr}</h1>
+            <p className="mt-6 text-lg leading-8 text-gray-600">{description.fr}</p>
           </div>
         </div>
       </section>
@@ -62,13 +67,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <section className="py-16">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
           <div>
-            <img src={project.coverImage} alt={project.title.fr} className="h-[440px] w-full rounded-[32px] object-cover" />
+            <img src={coverImage} alt={title.fr} className="h-[440px] w-full rounded-[32px] object-cover" />
             <div className="mt-4 grid grid-cols-3 gap-4">
               {relatedImages.map((image, index) => (
                 <img
                   key={`${image}-${index}`}
                   src={image}
-                  alt={`${project.title.fr} illustration ${index + 1}`}
+                  alt={`${title.fr} illustration ${index + 1}`}
                   className="h-28 w-full rounded-[20px] object-cover"
                 />
               ))}
@@ -86,27 +91,27 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="mb-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-gray-50 p-5">
                 <div className="text-sm text-gray-500">Objectif</div>
-                <div className="mt-1 font-bold text-gray-950">{project.goalAmount.toLocaleString("fr-FR")} FCFA</div>
+                <div className="mt-1 font-bold text-gray-950">{goalAmount.toLocaleString("fr-FR")} FCFA</div>
               </div>
               <div className="rounded-2xl bg-gray-50 p-5">
                 <div className="text-sm text-gray-500">Collecte</div>
-                <div className="mt-1 font-bold text-gray-950">{project.collectedAmount.toLocaleString("fr-FR")} FCFA</div>
+                <div className="mt-1 font-bold text-gray-950">{collectedAmount.toLocaleString("fr-FR")} FCFA</div>
               </div>
               <div className="rounded-2xl bg-gray-50 p-5">
                 <div className="text-sm text-gray-500">Beneficiaires</div>
-                <div className="mt-1 font-bold text-gray-950">{project.beneficiaryLabel.fr}</div>
+                <div className="mt-1 font-bold text-gray-950">{beneficiaryLabel.fr}</div>
               </div>
               <div className="rounded-2xl bg-gray-50 p-5">
                 <div className="text-sm text-gray-500">Statut</div>
-                <div className="mt-1 font-bold text-gray-950">{statusLabel[project.status]}</div>
+                <div className="mt-1 font-bold text-gray-950">{statusLabel[project.status] || project.status}</div>
               </div>
               <div className="rounded-2xl bg-gray-50 p-5">
                 <div className="text-sm text-gray-500">Cause</div>
-                <div className="mt-1 font-bold text-gray-950">{themeLabel[project.theme]}</div>
+                <div className="mt-1 font-bold text-gray-950">{themeLabel[project.theme] || project.theme}</div>
               </div>
               <div className="rounded-2xl bg-gray-50 p-5">
                 <div className="text-sm text-gray-500">Localisation</div>
-                <div className="mt-1 font-bold text-gray-950">{project.location.fr}</div>
+                <div className="mt-1 font-bold text-gray-950">{location.fr}</div>
               </div>
             </div>
 
@@ -120,13 +125,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
             <div className="grid gap-4 sm:grid-cols-2">
               <button className="rounded-button bg-primary px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-orange-600">
-                {pageContent.projectDetail.donationCta}
+                Faire un don
               </button>
               <Link
                 href="/journal"
                 className="rounded-button border border-gray-300 px-6 py-4 text-center text-lg font-semibold text-gray-900 transition-colors hover:border-primary hover:text-primary"
               >
-                {pageContent.projectDetail.updatesCta}
+                Suivre les mises a jour
               </Link>
             </div>
           </div>
@@ -136,23 +141,27 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <section className="bg-gray-50 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-3xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">{pageContent.projectDetail.updatesEyebrow}</p>
-            <h2 className="text-4xl font-bold text-gray-950">{pageContent.projectDetail.updatesTitle}</h2>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Suivi du projet</p>
+            <h2 className="text-4xl font-bold text-gray-950">Les etapes cles de ce projet</h2>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            {updates.map((update, index) => (
-              <div key={update} className="rounded-[28px] bg-white p-8 ring-1 ring-gray-100">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
-                  0{index + 1}
-                </div>
-                <p className="leading-7 text-gray-600">{update}</p>
-              </div>
-            ))}
+            <div className="rounded-[28px] bg-white p-8 ring-1 ring-gray-100">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">01</div>
+              <p className="leading-7 text-gray-600">Reperage des zones prioritaires et validation des besoins locaux avec les partenaires.</p>
+            </div>
+            <div className="rounded-[28px] bg-white p-8 ring-1 ring-gray-100">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">02</div>
+              <p className="leading-7 text-gray-600">Preparation de la logistique terrain et coordination avec les relais communautaires.</p>
+            </div>
+            <div className="rounded-[28px] bg-white p-8 ring-1 ring-gray-100">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">03</div>
+              <p className="leading-7 text-gray-600">Documentation photo et publication des prochaines etapes dans le journal dedie.</p>
+            </div>
           </div>
-            <div className="mt-10 rounded-[28px] bg-gradient-to-r from-primary to-secondary p-8 text-white">
+          <div className="mt-10 rounded-[28px] bg-gradient-to-r from-primary to-secondary p-8 text-white">
             <div className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-200">Prochaines etapes</div>
             <p className="max-w-4xl text-lg leading-8 text-white/90">
-              Chaque projet fait l'objet d'un suivi regulier. Les mises a jour, photos et rapports sont publies dans le journal et la galerie pour assurer une transparence totale.
+              Chaque projet fait l&apos;objet d&apos;un suivi regulier. Les mises a jour, photos et rapports sont publies dans le journal et la galerie pour assurer une transparence totale.
             </p>
           </div>
         </div>

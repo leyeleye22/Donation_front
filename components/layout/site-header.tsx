@@ -3,34 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { homeContent } from "@/lib/mock-data/home";
-import { navItems as defaultNavItems, siteSettings } from "@/lib/mock-data/site";
-import { siteChromeContent } from "@/lib/mock-data/ui-content";
+import { api } from "@/lib/api";
+import { mapNavItem } from "@/lib/api-mappers";
 import { loadGlobalSettings } from "@/lib/admin/global-settings";
 import { resolveImageUrl } from "@/lib/image-url";
-
-const NAV_STORAGE_KEY = "entraide-admin-nav-items";
+import type { NavItem } from "@/lib/types";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [navItems, setNavItems] = useState(defaultNavItems);
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
   const [siteName, setSiteName] = useState("Entr'aide pour servir l'humanité");
   const [donationText, setDonationText] = useState("Faire un don");
 
   useEffect(() => {
-    const raw = localStorage.getItem(NAV_STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const saved = JSON.parse(raw) as { href: string; label: string; enabled: boolean }[];
-      const enabled = saved
-        .filter((item) => item.enabled)
-        .map((item) => ({
-          href: item.href,
-          label: { fr: item.label, en: item.label, ar: item.label }
-        }));
-      if (enabled.length > 0) setNavItems(enabled);
-    } catch {}
+    api.getNavigation().then((data: any) => {
+      if (Array.isArray(data)) {
+        const enabled = data
+          .filter((item: any) => item.is_active ?? true)
+          .map(mapNavItem);
+        if (enabled.length > 0) setNavItems(enabled);
+      }
+    }).catch((e) => { console.error("SiteHeader: failed to load nav", e); });
   }, []);
 
   useEffect(() => {
@@ -51,12 +45,12 @@ export function SiteHeader() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 text-xs sm:px-6 lg:px-8">
           <p className="truncate">
             <span className="mr-2 rounded-full bg-primary px-2 py-1 font-semibold text-white">
-              {homeContent.emergencyBanner.label}
+              Urgence
             </span>
-            {homeContent.emergencyBanner.text}
+            Ensemble, agissons pour les communautes dans le besoin.
           </p>
           <Link href="/journal" className="hidden whitespace-nowrap text-orange-200 hover:text-white md:block">
-            {siteChromeContent.emergencyBanner.ctaLabel}
+            Suivre nos actions
           </Link>
         </div>
       </div>

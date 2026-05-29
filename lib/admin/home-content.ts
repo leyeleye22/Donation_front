@@ -86,6 +86,6 @@ export async function loadHomeContent(): Promise<HomeEditorContent> {
   try {
     const res = await api.getPage('home');
     if (res?.content) return resolveContentImages(res.content as HomeEditorContent);
-  } catch {}
+  } catch (e) { console.error("loadHomeContent: failed to load", e); }
   return defaultHomeEditorContent;
 }

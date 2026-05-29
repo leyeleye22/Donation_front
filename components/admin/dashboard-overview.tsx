@@ -47,7 +47,7 @@ export function DashboardOverview() {
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    api.getDashboardKpi().then((res) => setData(mapKpi(res))).catch(() => {});
+    api.getDashboardKpi().then((res) => setData(mapKpi(res))).catch((e) => { console.error("DashboardOverview: failed to load KPI", e); });
   }, []);
 
   if (!data) {

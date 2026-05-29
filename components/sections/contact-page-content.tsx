@@ -1,19 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { pageContent } from "@/lib/mock-data/ui-content";
 import { loadContactContent, type ContactEditorContent } from "@/lib/admin/contact-content";
+import { api } from "@/lib/api";
 
 export function ContactPageContent() {
   const [cms, setCms] = useState<ContactEditorContent | null>(null);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
 
-  useEffect(() => { loadContactContent().then(setCms); }, []);
+  useEffect(() => { loadContactContent().then(setCms).catch(console.error); }, []);
 
   const h = cms ?? {
-    heroEyebrow: pageContent.contact.eyebrow,
-    heroTitle: pageContent.contact.title,
-    heroDescription: pageContent.contact.description,
+    heroEyebrow: "Contact",
+    heroTitle: "Une page contact qui doit reduire les frictions et donner confiance.",
+    heroDescription: "Remplir un formulaire, ecrire directement ou trouver l'information utile: chaque geste doit etre simple et rapide.",
     contactHeading: "Parler a l'association",
     address: "Medine N 260, Mbour, Senegal",
     phones: ["+221 77 639 20 69", "+221 76 811 14 12"],
@@ -32,6 +39,26 @@ export function ContactPageContent() {
     contactCards: [],
     faq: []
   } as ContactEditorContent;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSending(true);
+    try {
+      await api.sendContactMessage({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        subject,
+        message,
+      });
+      setSent(true);
+    } catch (err: any) {
+      setError(err?.message || "Erreur lors de l'envoi du message.");
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div className="bg-white">
@@ -73,19 +100,57 @@ export function ContactPageContent() {
 
           <div className="rounded-[32px] bg-white p-8 shadow-[0_10px_40px_rgba(15,23,42,0.08)] ring-1 ring-gray-100">
             <h2 className="mb-6 text-3xl font-bold text-gray-950">{h.formTitle}</h2>
-            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); setSent(true); }}>
-              {h.formFields.slice(0, 2).map((f, i) => (
-                <input key={i} className="w-full rounded-xl border border-gray-300 px-4 py-4" placeholder={f.label} />
-              ))}
-              <input className="w-full rounded-xl border border-gray-300 px-4 py-4" placeholder={h.formFields[2]?.label ?? "Email"} />
-              <select className="w-full rounded-xl border border-gray-300 px-4 py-4 text-gray-600">
-                {h.subjectOptions.map((o, i) => <option key={i}>{o}</option>)}
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <input
+                className="w-full rounded-xl border border-gray-300 px-4 py-4"
+                placeholder={h.formFields[0]?.label}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+              <input
+                className="w-full rounded-xl border border-gray-300 px-4 py-4"
+                placeholder={h.formFields[1]?.label}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+              <input
+                className="w-full rounded-xl border border-gray-300 px-4 py-4"
+                placeholder={h.formFields[2]?.label ?? "Email"}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <select
+                className="w-full rounded-xl border border-gray-300 px-4 py-4 text-gray-600"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              >
+                {h.subjectOptions.map((o, i) => <option key={i} value={i === 0 ? "" : o}>{o}</option>)}
               </select>
-              <textarea className="min-h-44 w-full rounded-xl border border-gray-300 px-4 py-4" placeholder={h.formFields[3]?.label ?? "Votre message"} />
-              <button className="rounded-button bg-primary px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-orange-600">
-                {h.submitCta}
+              <textarea
+                className="min-h-44 w-full rounded-xl border border-gray-300 px-4 py-4"
+                placeholder={h.formFields[3]?.label ?? "Votre message"}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                required
+              />
+              <button
+                type="submit"
+                disabled={sending}
+                className="rounded-button bg-primary px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
+              >
+                {sending ? "Envoi..." : h.submitCta}
               </button>
             </form>
+
+            {error ? (
+              <div className="mt-6 rounded-2xl bg-red-50 p-5 text-sm leading-6 text-red-700 ring-1 ring-red-200">
+                {error}
+              </div>
+            ) : null}
 
             {sent ? (
               <div className="mt-6 rounded-2xl bg-green-50 p-5 text-sm leading-6 text-green-700 ring-1 ring-green-200">

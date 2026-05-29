@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { projects as fallbackProjects } from "@/lib/mock-data/projects";
-import { pageContent } from "@/lib/mock-data/ui-content";
 import { api } from "@/lib/api";
+import { mapProject } from "@/lib/api-mappers";
+import type { Project } from "@/lib/types";
 
 const statusFilters = [
   { id: "all", label: "Tous" },
@@ -44,11 +44,13 @@ function projectProgress(goalAmount: number, collectedAmount: number) {
 }
 
 export function ProjectsPageContent() {
-  const [allProjects, setAllProjects] = useState<typeof fallbackProjects>(fallbackProjects);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     api.getProjects().then((res) => {
-      if (res?.data) setAllProjects(res.data);
-    }).catch(() => {});
+      if (res?.data) setAllProjects((res.data || []).map(mapProject));
+      setLoaded(true);
+    }).catch((e) => { console.error("ProjectsPageContent: failed to load projects", e); setLoaded(true); });
   }, []);
   const [activeStatus, setActiveStatus] = useState<(typeof statusFilters)[number]["id"]>("all");
   const [activeTheme, setActiveTheme] = useState<(typeof themeFilters)[number]["id"]>("all");
@@ -107,13 +109,17 @@ export function ProjectsPageContent() {
     upcoming: allProjects.filter((project) => project.status === "upcoming").length
   };
 
+  if (!loaded) {
+    return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement des projets...</div>;
+  }
+
   return (
     <div className="bg-white">
       <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.14),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.16),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_56%,_#fff7ed_100%)]">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <div className="grid gap-10 lg:grid-cols-[0.88fr_1.12fr]">
             <div className="flex flex-col justify-center">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">{pageContent.projects.eyebrow}</p>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Projets</p>
               <h1 className="max-w-4xl text-5xl font-bold leading-[1.04] text-gray-950 md:text-6xl">
                 Une page projet pensee pour tenir avec 70 campagnes et plus.
               </h1>
@@ -399,7 +405,7 @@ export function ProjectsPageContent() {
                       Voir plus sur ce projet
                     </Link>
                     <button className="rounded-button border border-secondary/18 bg-white px-6 py-3.5 text-base font-semibold text-secondary transition hover:bg-secondary/6">
-                      {pageContent.projects.simulateDonationCta}
+                      Faire un don
                     </button>
                   </div>
                 </div>

@@ -1,20 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { resolveImageUrl } from "@/lib/image-url";
+import { api } from "@/lib/api";
+import { mapGalleryItem } from "@/lib/api-mappers";
 
-const baseItems = [
-  { id: "gallery-1", title: "Education", image: resolveImageUrl("/assets/education.jpeg"), category: "education" },
-  { id: "gallery-2", title: "Consultation", image: resolveImageUrl("/assets/consultation.jpeg"), category: "sante" },
-  { id: "gallery-3", title: "Acces a l'eau", image: resolveImageUrl("/assets/puits.jpeg"), category: "eau" },
-  { id: "gallery-4", title: "Terrain", image: resolveImageUrl("/assets/whats.jpeg"), category: "terrain" },
-  { id: "gallery-5", title: "Classe", image: resolveImageUrl("/assets/classe.jpeg"), category: "education" },
-  { id: "gallery-6", title: "Equipe", image: resolveImageUrl("/assets/about.jpeg"), category: "terrain" },
-  { id: "gallery-7", title: "Point d'eau", image: resolveImageUrl("/assets/3.jpeg"), category: "eau" },
-  { id: "gallery-8", title: "Soutien", image: resolveImageUrl("/assets/educationn.jpeg"), category: "education" },
-  { id: "gallery-9", title: "Mobilisation", image: resolveImageUrl("/assets/partenaire.jpeg"), category: "terrain" },
-  { id: "gallery-10", title: "Sante", image: resolveImageUrl("/assets/santee.jpg"), category: "sante" }
-];
+type GalleryDisplayItem = { id: string; title: string; image: string; category: string };
 
 const filters = [
   { id: "all", label: "Tout" },
@@ -25,9 +15,24 @@ const filters = [
 ] as const;
 
 export function GalleryPageContent() {
+  const [baseItems, setBaseItems] = useState<GalleryDisplayItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]["id"]>("all");
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    api.getGallery().then((res) => {
+      const items: any[] = res?.data ?? [];
+      setBaseItems(items.map((g: any) => {
+        const mapped = mapGalleryItem(g);
+        const cat = Array.isArray(mapped.category) && mapped.category.length > 0
+          ? mapped.category[0] : "general";
+        return { id: mapped.id, title: mapped.title.fr, image: mapped.image, category: cat };
+      }));
+      setLoaded(true);
+    }).catch((e) => { console.error("GalleryPageContent: failed to load gallery", e); setLoaded(true); });
+  }, []);
 
   const visibleItems = useMemo(() => {
     if (activeFilter === "all") return baseItems;
@@ -44,13 +49,17 @@ export function GalleryPageContent() {
 
     const interval = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % visibleItems.length);
-    }, 3600);
+    }, 5000);
 
     return () => window.clearInterval(interval);
   }, [visibleItems]);
 
   const featuredItem = visibleItems[activeSlide] ?? baseItems[0];
   const lightboxItem = selectedIndex !== null ? visibleItems[selectedIndex] : null;
+
+  if (!loaded || baseItems.length === 0) {
+    return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement de la galerie...</div>;
+  }
 
   const openLightbox = (index: number) => setSelectedIndex(index);
   const closeLightbox = () => setSelectedIndex(null);

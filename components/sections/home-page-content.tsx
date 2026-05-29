@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { homeContent as fallbackContent } from "@/lib/mock-data/home";
 import { loadHomeContent, type HomeEditorContent } from "@/lib/admin/home-content";
-import { posts } from "@/lib/mock-data/posts";
-import { projects } from "@/lib/mock-data/projects";
+import { api } from "@/lib/api";
+import { mapProject, mapPost } from "@/lib/api-mappers";
 import { SectionVisibility } from "@/components/ui/section-visibility";
 import { resolveImageUrl } from "@/lib/image-url";
+import type { Project, Post } from "@/lib/types";
 
 function projectProgress(goalAmount: number, collectedAmount: number) {
   return Math.round((collectedAmount / goalAmount) * 100);
@@ -47,34 +47,67 @@ const HOME_PROJECT_PAGE_SIZE = 4;
 
 export function HomePageContent() {
   const [cms, setCms] = useState<HomeEditorContent | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
   const [donationOpen, setDonationOpen] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [activeProjectStatus, setActiveProjectStatus] = useState<(typeof homeProjectStatusFilters)[number]["id"]>("all");
   const [activeProjectTheme, setActiveProjectTheme] = useState<(typeof homeProjectThemeFilters)[number]["id"]>("all");
   const [homeProjectPage, setHomeProjectPage] = useState(1);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterMsg, setNewsletterMsg] = useState("");
+  const [newsletterError, setNewsletterError] = useState("");
+
+  async function handleNewsletterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setNewsletterLoading(true);
+    setNewsletterMsg("");
+    setNewsletterError("");
+    try {
+      const res = await api.subscribeNewsletter(newsletterEmail);
+      setNewsletterMsg(res.message || "Inscription reussie !");
+      setNewsletterEmail("");
+    } catch (e: any) {
+      console.error("HomePageContent: newsletter", e);
+      setNewsletterError(e.message || "Erreur d'inscription");
+    } finally {
+      setNewsletterLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    Promise.all([
+      loadHomeContent(),
+      api.getProjects("per_page=20"),
+      api.getPosts("per_page=3"),
+    ]).then(([cmsData, projectsRes, postsRes]) => {
+      if (cmsData) setCms(cmsData);
+      if (projectsRes?.data) setProjects((projectsRes.data || []).map(mapProject));
+      if (postsRes?.data) setFeaturedPosts((postsRes.data || []).map(mapPost));
+    }).catch((e) => { console.error("HomePageContent: failed to load data", e); });
+  }, []);
+
   const filteredHomeProjects = useMemo(() => {
     return projects.filter((project) => {
       const matchesStatus = activeProjectStatus === "all" || project.status === activeProjectStatus;
       const matchesTheme = activeProjectTheme === "all" || project.theme === activeProjectTheme;
       return matchesStatus && matchesTheme;
     });
-  }, [activeProjectStatus, activeProjectTheme]);
+  }, [projects, activeProjectStatus, activeProjectTheme]);
   const homeProjectTotalPages = Math.max(1, Math.ceil(filteredHomeProjects.length / HOME_PROJECT_PAGE_SIZE));
   const paginatedHomeProjects = useMemo(() => {
     const start = (homeProjectPage - 1) * HOME_PROJECT_PAGE_SIZE;
     return filteredHomeProjects.slice(start, start + HOME_PROJECT_PAGE_SIZE);
   }, [filteredHomeProjects, homeProjectPage]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(projects[0]?.id ?? null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const activeProject =
     paginatedHomeProjects.find((project) => project.id === activeProjectId) ??
     filteredHomeProjects.find((project) => project.id === activeProjectId) ??
     paginatedHomeProjects[0] ??
     projects[0] ??
     null;
-  const featuredPosts = posts.slice(0, 3);
-
-  useEffect(() => { loadHomeContent().then(setCms); }, []);
 
   useEffect(() => {
     setHomeProjectPage(1);
@@ -101,6 +134,12 @@ export function HomePageContent() {
     }
   }, [activeProjectId, filteredHomeProjects, paginatedHomeProjects]);
 
+  if (!cms) return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement...</div>;
+
+  if (!activeProject && projects.length === 0 && featuredPosts.length === 0) {
+    return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement des donnees...</div>;
+  }
+
   return (
     <>
       <SectionVisibility section="hero">
@@ -108,30 +147,30 @@ export function HomePageContent() {
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center">
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.28em] text-secondary">
-              {cms?.heroEyebrow ?? fallbackContent.hero.eyebrow}
+              {cms?.heroEyebrow ?? "Urgence"}
             </p>
             <h1 className="max-w-4xl text-5xl font-bold leading-[1.04] text-gray-950 md:text-6xl">
-              {cms?.heroTitle ?? fallbackContent.hero.title}
+              {cms?.heroTitle ?? ""}
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">{cms?.heroDescription ?? fallbackContent.hero.description}</p>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">{cms?.heroDescription ?? ""}</p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <button
                 className="rounded-button bg-primary px-8 py-4 text-lg font-semibold text-white transition hover:bg-orange-500"
                 onClick={() => setDonationOpen(true)}
               >
-                {cms?.primaryCta ?? fallbackContent.hero.primaryCta}
+                {cms?.primaryCta ?? ""}
               </button>
               <Link
                 href="/projects"
                 className="rounded-button border border-secondary/20 bg-white px-8 py-4 text-center text-lg font-semibold text-secondary transition hover:border-secondary hover:bg-secondary/5"
               >
-                {cms?.secondaryCta ?? fallbackContent.hero.secondaryCta}
+                {cms?.secondaryCta ?? ""}
               </Link>
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {(cms?.heroStats ?? fallbackContent.hero.stats).map((stat, index) => (
+              {(cms?.heroStats ?? []).map((stat, index) => (
                 <div
                   key={stat.label}
                   className={`rounded-[24px] border p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] ${
@@ -152,7 +191,7 @@ export function HomePageContent() {
               <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/12 to-transparent" />
               <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-6">
                 <div className="rounded-full border border-white/60 bg-white/85 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary backdrop-blur">
-                  {cms?.featuredLabel ?? fallbackContent.hero.featuredLabel}
+                  {cms?.featuredLabel ?? ""}
                 </div>
                 <button
                   className="rounded-full bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg transition hover:bg-orange-500"
@@ -163,8 +202,8 @@ export function HomePageContent() {
               </div>
               <div className="absolute inset-x-0 bottom-0 p-6">
                 <div className="max-w-xl rounded-[28px] border border-white/60 bg-white/88 p-6 backdrop-blur-md">
-                  <h2 className="text-2xl font-bold leading-tight text-gray-950">{cms?.featuredTitle ?? fallbackContent.hero.featuredTitle}</h2>
-                  <p className="mt-3 text-sm leading-7 text-gray-700">{cms?.featuredDescription ?? fallbackContent.hero.featuredDescription}</p>
+                  <h2 className="text-2xl font-bold leading-tight text-gray-950">{cms?.featuredTitle ?? ""}</h2>
+                  <p className="mt-3 text-sm leading-7 text-gray-700">{cms?.featuredDescription ?? ""}</p>
                 </div>
               </div>
             </div>
@@ -182,7 +221,7 @@ export function HomePageContent() {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {(cms?.trustPoints ?? fallbackContent.hero.trustPoints).map((point) => (
+                  {(cms?.trustPoints ?? []).map((point) => (
                     <div key={point} className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-gray-700">
                       {point}
                     </div>
@@ -199,7 +238,7 @@ export function HomePageContent() {
       <SectionVisibility section="trustBar">
         <section className="bg-white py-6">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-          {(cms?.proofStrip ?? fallbackContent.proofStrip).map((item) => (
+          {(cms?.proofStrip ?? []).map((item) => (
             <div key={item.label} className="rounded-[26px] border border-gray-100 bg-white px-5 py-5 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
               <div className="text-2xl font-bold text-gray-950">{item.value}</div>
               <div className="mt-1 text-sm text-gray-600">{item.label}</div>
@@ -220,7 +259,7 @@ export function HomePageContent() {
             </p>
           </div>
           <div className="grid gap-6 lg:grid-cols-3">
-            {(cms?.entryPoints ?? fallbackContent.entryPoints).map((item) => (
+            {(cms?.entryPoints ?? []).map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
@@ -250,6 +289,7 @@ export function HomePageContent() {
       </SectionVisibility>
 
       <SectionVisibility section="projects">
+        {projects.length > 0 ? (
         <section className="bg-white py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -469,6 +509,7 @@ export function HomePageContent() {
           </div>
         </div>
         </section>
+      ) : null}
       </SectionVisibility>
 
       <SectionVisibility section="mission">
@@ -503,7 +544,7 @@ export function HomePageContent() {
             </div>
 
             <div className="grid gap-5">
-              {(cms?.pillars ?? fallbackContent.pillars).map((pillar, index) => (
+              {(cms?.pillars ?? []).map((pillar, index) => (
                 <div
                   key={pillar.title}
                   className="group grid gap-4 rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 md:grid-cols-[84px_1fr]"
@@ -621,10 +662,10 @@ export function HomePageContent() {
             <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
               <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
                 <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-secondary">Transparence</p>
-                <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.transparencyTitle ?? fallbackContent.transparency.title}</h2>
-                <p className="max-w-xl leading-8 text-gray-600">{cms?.transparencyDescription ?? fallbackContent.transparency.description}</p>
+                <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.transparencyTitle ?? ""}</h2>
+                <p className="max-w-xl leading-8 text-gray-600">{cms?.transparencyDescription ?? ""}</p>
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                  {(cms?.transparencyItems ?? fallbackContent.transparency.items).map((item) => (
+                  {(cms?.transparencyItems ?? []).map((item) => (
                     <div key={item.label} className="rounded-2xl border border-primary/10 bg-primary/5 p-5">
                       <div className="text-2xl font-bold text-gray-950">{item.value}</div>
                       <div className="mt-1 text-sm text-gray-600">{item.label}</div>
@@ -650,8 +691,8 @@ export function HomePageContent() {
           <div className="mb-14 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Galerie</p>
-              <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.galleryTitle ?? fallbackContent.gallery.title}</h2>
-              <p className="text-lg leading-8 text-gray-600">{cms?.galleryDescription ?? fallbackContent.gallery.description}</p>
+              <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.galleryTitle ?? ""}</h2>
+              <p className="text-lg leading-8 text-gray-600">{cms?.galleryDescription ?? ""}</p>
             </div>
             <Link href="/gallery" className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-600 hover:text-primary">
               Voir toute la galerie
@@ -712,28 +753,32 @@ export function HomePageContent() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Newsletter</p>
-            <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.newsletterTitle ?? fallbackContent.newsletter.title}</h2>
-            <p className="mx-auto max-w-2xl text-lg leading-8 text-gray-600">{cms?.newsletterDescription ?? fallbackContent.newsletter.description}</p>
+            <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.newsletterTitle ?? ""}</h2>
+            <p className="mx-auto max-w-2xl text-lg leading-8 text-gray-600">{cms?.newsletterDescription ?? ""}</p>
           </div>
 
           <div className="mx-auto mt-10 max-w-2xl rounded-[32px] bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] ring-1 ring-gray-100 md:p-8">
-            <form className="space-y-4">
+            {newsletterMsg && <p className="mb-4 text-center text-sm font-medium text-green-600">{newsletterMsg}</p>}
+            {newsletterError && <p className="mb-4 text-center text-sm font-medium text-red-600">{newsletterError}</p>}
+            <form onSubmit={handleNewsletterSubmit} className="space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row">
                 <input
                   type="email"
                   required
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Votre adresse email"
                   className="w-full rounded-xl border border-gray-300 px-4 py-4 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                   type="submit"
-                  className="whitespace-nowrap rounded-xl bg-primary px-6 py-4 text-base font-semibold text-white transition hover:bg-orange-600"
+                  disabled={newsletterLoading}
+                  className="whitespace-nowrap rounded-xl bg-primary px-6 py-4 text-base font-semibold text-white transition hover:bg-orange-600 disabled:opacity-50"
                 >
-                  S'abonner
+                  {newsletterLoading ? "Inscription..." : "S'abonner"}
                 </button>
               </div>
             </form>
-
           </div>
         </div>
         </section>

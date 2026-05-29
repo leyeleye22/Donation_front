@@ -2,16 +2,27 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { navItems } from "@/lib/mock-data/site";
-import { siteChromeContent } from "@/lib/mock-data/ui-content";
+import { api } from "@/lib/api";
+import { mapNavItem } from "@/lib/api-mappers";
 import { loadGlobalSettings, type GlobalSettings, defaultGlobalSettings } from "@/lib/admin/global-settings";
 import { resolveImageUrl } from "@/lib/image-url";
+import type { NavItem } from "@/lib/types";
 
 export function SiteFooter() {
   const [settings, setSettings] = useState<GlobalSettings>(defaultGlobalSettings);
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
 
   useEffect(() => {
     loadGlobalSettings().then(setSettings);
+  }, []);
+
+  useEffect(() => {
+    api.getNavigation().then((data: any) => {
+      if (Array.isArray(data)) {
+        const enabled = data.filter((item: any) => item.is_active ?? true).map(mapNavItem);
+        if (enabled.length > 0) setNavItems(enabled);
+      }
+    }).catch((e) => { console.error("SiteFooter: failed to load nav", e); });
   }, []);
 
   return (
@@ -23,12 +34,10 @@ export function SiteFooter() {
             {settings.footerIntro}
           </p>
           <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 sm:grid-cols-4">
-            {siteChromeContent.footer.stats.map((stat) => (
-              <div key={stat.label}>
-                <div className="text-2xl font-bold text-gray-950">{stat.value}</div>
-                <div>{stat.label}</div>
-              </div>
-            ))}
+            <div><div className="text-2xl font-bold text-gray-950">50+</div><div>Projets realises</div></div>
+            <div><div className="text-2xl font-bold text-gray-950">2000+</div><div>Beneficiaires</div></div>
+            <div><div className="text-2xl font-bold text-gray-950">5</div><div>Themes d&apos;action</div></div>
+            <div><div className="text-2xl font-bold text-gray-950">10+</div><div>Partenaires</div></div>
           </div>
         </div>
         <div>
@@ -51,8 +60,8 @@ export function SiteFooter() {
             <p>eapsh1@outlook.com</p>
           </div>
           <div className="mt-6 rounded-2xl border border-primary/12 bg-white p-4 text-sm text-gray-600 shadow-[0_12px_32px_rgba(15,23,42,0.05)]">
-            <div className="mb-2 font-semibold text-primary">{siteChromeContent.footer.transparencyTitle}</div>
-            <p>{siteChromeContent.footer.transparencyText}</p>
+            <div className="mb-2 font-semibold text-primary">Transparence</div>
+            <p>Chaque projet fait l&apos;objet d&apos;un suivi regulier et d&apos;une publication detaillee dans notre journal.</p>
           </div>
         </div>
       </div>

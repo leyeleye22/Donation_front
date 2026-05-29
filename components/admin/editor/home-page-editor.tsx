@@ -77,9 +77,10 @@ const steps = [
 export function HomePageEditor() {
   const [content, setContent] = useState<HomeEditorContent>(defaultHomeEditorContent);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [step, setStep] = useState(0);
 
-  useEffect(() => { loadHomeContent().then(setContent); }, []);
+  useEffect(() => { loadHomeContent().then(setContent).catch(console.error); }, []);
 
   useEffect(() => { if (!saved) return; const t = setTimeout(() => setSaved(false), 1800); return () => clearTimeout(t); }, [saved]);
 
@@ -88,10 +89,14 @@ export function HomePageEditor() {
   }
 
   async function handleSave() {
+    setSaveError("");
     try {
       await api.updatePage('home', content);
       setSaved(true);
-    } catch {}
+    } catch (e: any) {
+      setSaveError(e?.message || "Erreur lors de l'enregistrement.");
+      console.error("HomePageEditor: save failed", e);
+    }
   }
 
   function handleReset() {
@@ -227,6 +232,7 @@ export function HomePageEditor() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-gray-600">
                 {saved ? <span className="font-semibold text-secondary">Modifications enregistrees.</span> : "Pense a sauvegarder."}
+                {saveError ? <span className="ml-2 font-semibold text-red-500">{saveError}</span> : null}
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => setStep((c) => Math.max(0, c - 1))} disabled={step === 0}

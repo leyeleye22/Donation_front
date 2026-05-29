@@ -134,9 +134,10 @@ const steps = [
 export function AboutPageEditor() {
   const [content, setContent] = useState<AboutEditorContent>(defaultAboutEditorContent);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [step, setStep] = useState(0);
 
-  useEffect(() => { loadAboutContent().then(setContent); }, []);
+  useEffect(() => { loadAboutContent().then(setContent).catch(console.error); }, []);
 
   useEffect(() => { if (!saved) return; const t = setTimeout(() => setSaved(false), 1800); return () => clearTimeout(t); }, [saved]);
 
@@ -145,10 +146,14 @@ export function AboutPageEditor() {
   }
 
   async function handleSave() {
+    setSaveError("");
     try {
       await api.updatePage('about', content);
       setSaved(true);
-    } catch {}
+    } catch (e: any) {
+      setSaveError(e?.message || "Erreur lors de l'enregistrement.");
+      console.error("AboutPageEditor: save failed", e);
+    }
   }
 
   function handleReset() {
@@ -286,6 +291,7 @@ export function AboutPageEditor() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-gray-600">
                 {saved ? <span className="font-semibold text-secondary">Modifications enregistrees localement.</span> : "Pense a sauvegarder avant de quitter."}
+                {saveError ? <span className="ml-2 font-semibold text-red-500">{saveError}</span> : null}
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => setStep((c) => Math.max(0, c - 1))} disabled={step === 0} className="rounded-button border border-secondary/16 bg-white px-5 py-3 text-sm font-semibold text-secondary transition disabled:cursor-not-allowed disabled:opacity-40 hover:bg-secondary/6">Precedent</button>

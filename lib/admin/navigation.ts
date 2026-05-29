@@ -27,8 +27,16 @@ export const adminNavigation = [
     ]
   },
   {
+    title: "Communication",
+    items: [
+      { label: "Templates email", href: "/dashboard/email-templates" },
+      { label: "Newsletter", href: "/dashboard/newsletter" }
+    ]
+  },
+  {
     title: "Structure",
     items: [
+      { label: "Themes", href: "/dashboard/themes" },
       { label: "Navigation", href: "/dashboard/navigation" },
       { label: "Parametres", href: "/dashboard/settings" }
     ]

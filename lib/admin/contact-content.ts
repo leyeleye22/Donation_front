@@ -1,5 +1,5 @@
-import { contactPageContent } from "@/lib/mock-data/page-sections";
 import { api } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/image-url";
 
 export const CONTACT_EDITOR_STORAGE_KEY = "entraide-admin-contact-content";
 
@@ -48,16 +48,26 @@ export const defaultContactEditorContent: ContactEditorContent = {
   subjectOptions: ["Choisir un sujet", "Projet", "Journal", "Don", "Partenariat"],
   submitCta: "Envoyer",
   successMessage: "Merci pour votre message. Nous vous repondrons dans les plus brefs delais.",
-  contactCards: contactPageContent.contactCards.map((c) => ({ title: c.title, text: c.text })),
-  faq: contactPageContent.faq.map((f) => ({ question: f.question, answer: f.answer })),
+  contactCards: [
+    { title: "Equipe terrain", text: "Nos equipes sont basees a Mbour et intervennent dans tout le Senegal." },
+    { title: "Partenaires", text: "Vous souhaitez collaborer ? Contactez-nous pour discuter de votre projet." },
+  ],
+  faq: [
+    { question: "Comment faire un don ?", answer: "Vous pouvez faire un don via notre page dediee ou nous contacter directement." },
+    { question: "Ou va mon don ?", answer: "Chaque don est integralement reverse aux projets que vous soutenez." },
+  ],
   faqHeading: "Questions frequentes",
   faqTitle: "Reponses aux demandes les plus courantes pour accelerer l'echange."
 };
 
+function resolveContentImages(content: ContactEditorContent): ContactEditorContent {
+  return content;
+}
+
 export async function loadContactContent(): Promise<ContactEditorContent> {
   try {
     const res = await api.getPage('contact');
-    if (res?.content) return res.content as ContactEditorContent;
-  } catch {}
+    if (res?.content) return resolveContentImages(res.content as ContactEditorContent);
+  } catch (e) { console.error("loadContactContent: failed to load", e); }
   return defaultContactEditorContent;
 }

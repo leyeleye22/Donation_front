@@ -4,8 +4,6 @@ import { resolveImageUrl } from "@/lib/image-url";
 
 export const ABOUT_EDITOR_STORAGE_KEY = "entraide-admin-about-content";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8001';
-
 export type AboutEditorContent = {
   heroEyebrow: string;
   heroTitle: string;
@@ -74,6 +72,6 @@ export async function loadAboutContent(): Promise<AboutEditorContent> {
   try {
     const res = await api.getPage('about');
     if (res?.content) return resolveContentImages(res.content as AboutEditorContent);
-  } catch {}
+  } catch (e) { console.error("loadAboutContent: failed to load", e); }
   return defaultAboutEditorContent;
 }

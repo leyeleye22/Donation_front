@@ -1,21 +1,17 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { loadGlobalSettings } from "@/lib/admin/global-settings";
+import { useSettings } from "@/lib/settings-context";
 
 export function FooterVisibility({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [visible, setVisible] = useState(true);
+  const settings = useSettings();
 
-  useEffect(() => {
-    loadGlobalSettings().then((settings) => {
-      const pageVisibility = settings.pageVisibility[pathname];
-      if (pageVisibility) {
-        setVisible(pageVisibility.footer ?? true);
-      }
-    });
-  }, [pathname]);
+  const visible = useMemo(() => {
+    const pageVisibility = settings.pageVisibility[pathname];
+    return pageVisibility ? pageVisibility.footer : true;
+  }, [settings, pathname]);
 
   if (!visible) return null;
   return <>{children}</>;

@@ -5,20 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { adminLogout } from "@/lib/admin-auth";
 import { adminNavigation, type AdminNavItem } from "@/lib/admin/navigation";
 
-const navIcons: Record<string, string> = {
-  Dashboard: "\u2302",
-  "Centre de contenu": "\u270E",
-  Accueil: "\u2302",
-  "A propos": "\u2139",
-  Contact: "\u2709",
-  Projets: "\u2692",
-  Journal: "\u270D",
-  Galerie: "\u25A6",
-  Media: "\u25B6",
-  Navigation: "\u2630",
-  Parametres: "\u2699"
-};
-
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -68,9 +54,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                     >
-                      <span className={`flex h-6 w-6 items-center justify-center text-base ${active ? "text-primary" : "text-gray-400"}`}>
-                        {navIcons[item.label] || "\u25CB"}
-                      </span>
                       <span>{item.label}</span>
                     </Link>
                   );

@@ -1,22 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { loadGlobalSettings } from "@/lib/admin/global-settings";
+import { useSettings } from "@/lib/settings-context";
 
 export function FloatingDonateButton() {
   const pathname = usePathname();
+  const settings = useSettings();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const [ctaText, setCtaText] = useState("Faire un don");
 
-  useEffect(() => {
-    loadGlobalSettings().then((settings) => {
-      setVisible(settings.showFloatingButton && settings.floatingButtonPages.includes(pathname));
-      setCtaText(settings.donationCtaText);
-    });
-  }, [pathname]);
+  const visible = useMemo(() =>
+    settings.showFloatingButton && settings.floatingButtonPages.includes(pathname),
+  [settings, pathname]);
+
+  const ctaText = settings.donationCtaText;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

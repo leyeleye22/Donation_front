@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { posts as fallbackPosts } from "@/lib/mock-data/posts";
 import { api } from "@/lib/api";
+import { mapPost } from "@/lib/api-mappers";
+import type { Post } from "@/lib/types";
 
 const categoryFilters = [
   { id: "all", label: "Tout" },
@@ -22,11 +23,13 @@ const categoryLabel: Record<(typeof categoryFilters)[number]["id"], string> = {
 const PAGE_SIZE = 6;
 
 export function JournalPageContent() {
-  const [allPosts, setAllPosts] = useState<typeof fallbackPosts>(fallbackPosts);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     api.getPosts().then((res) => {
-      if (res?.data) setAllPosts(res.data);
-    }).catch(() => {});
+      if (res?.data) setAllPosts((res.data || []).map(mapPost));
+      setLoaded(true);
+    }).catch((e) => { console.error("JournalPageContent: failed to load posts", e); setLoaded(true); });
   }, []);
   const featuredPosts = allPosts.slice(0, 3);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -87,6 +90,10 @@ export function JournalPageContent() {
     allPosts[0];
 
   const imageStrip = [...allPosts, ...allPosts];
+
+  if (!loaded || allPosts.length === 0) {
+    return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement des articles...</div>;
+  }
 
   return (
     <div className="bg-white">
