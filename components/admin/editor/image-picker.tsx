@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export function ImagePicker({
   label,
@@ -14,6 +14,11 @@ export function ImagePicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState(value);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setPreview(value);
+    setError(false);
+  }, [value]);
 
   function handleFile(file: File | undefined) {
     if (!file) return;
@@ -46,7 +51,7 @@ export function ImagePicker({
         {preview && !error ? (
           <>
             <img src={preview} alt={label} className="h-full w-full object-cover" onError={() => setError(true)} />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-primary/35">
               <span className="rounded-lg bg-white/90 px-4 py-2 text-sm font-semibold text-gray-700 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                 Changer l&apos;image
               </span>

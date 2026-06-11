@@ -2,6 +2,12 @@
 
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
+import { AdminAlert } from "@/components/admin/ui/admin-alert";
+import { AdminButton } from "@/components/admin/ui/admin-button";
+import { AdminEmptyState } from "@/components/admin/ui/admin-empty-state";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { PageHeader } from "@/components/admin/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Template = { id: string; name: string; subject: string; content: string; created_at: string };
 
@@ -84,89 +90,86 @@ export default function EmailTemplatesPage() {
     }
   }
 
-  if (loading) return <div className="p-4 text-gray-500">Chargement...</div>;
+  if (loading) {
+    return (
+      <AdminPage className="space-y-6">
+        <Skeleton className="h-28 rounded-2xl" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+      </AdminPage>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Templates d&apos;email</h2>
-          <p className="text-sm text-gray-500">Creez et envoyez des emails a vos abonnes</p>
-        </div>
-        <button onClick={openCreate} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:brightness-90">
-          Nouveau template
-        </button>
-      </div>
+    <AdminPage className="space-y-6">
+      <PageHeader
+        eyebrow="Relations & confiance"
+        eyebrowAlt
+        title="Templates d'email"
+        description="Creez et envoyez des emails a vos abonnes newsletter."
+        actions={<AdminButton onClick={openCreate}>Nouveau template</AdminButton>}
+        meta={<span className="admin-badge-neutral">{templates.length} template(s)</span>}
+      />
 
-      {msg && <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{msg}</div>}
-      {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      {msg ? <AdminAlert tone={msg.includes("Erreur") || msg.includes("erreur") ? "error" : "success"}>{msg}</AdminAlert> : null}
+      {error ? <AdminAlert tone="error">{error}</AdminAlert> : null}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <form onSubmit={handleSave} className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-bold text-gray-900">{editing ? "Modifier" : "Nouveau"} template</h3>
+      {showForm ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <form onSubmit={handleSave} className="admin-form-panel w-full max-w-2xl shadow-xl">
+            <h3 className="text-lg font-bold text-slate-900">{editing ? "Modifier le template" : "Nouveau template"}</h3>
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Nom interne</label>
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="admin-label">Nom interne</label>
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="admin-input" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Sujet</label>
-                <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="admin-label">Sujet</label>
+                <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required className="admin-input" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Contenu HTML</label>
-                <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required rows={12}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="admin-label">Contenu HTML</label>
+                <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} required rows={12} className="admin-textarea font-mono" />
               </div>
             </div>
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                Annuler
-              </button>
-              <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:brightness-90 disabled:opacity-50">
-                {saving ? "Sauvegarde..." : "Sauvegarder"}
-              </button>
+            <div className="flex items-center justify-end gap-3">
+              <AdminButton variant="ghost" type="button" onClick={() => setShowForm(false)}>Annuler</AdminButton>
+              <AdminButton type="submit" disabled={saving}>{saving ? "Sauvegarde..." : "Sauvegarder"}</AdminButton>
             </div>
           </form>
         </div>
-      )}
+      ) : null}
 
       {templates.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center">
-          <p className="text-gray-500">Aucun template pour le moment.</p>
-          <button onClick={openCreate} className="mt-3 text-sm font-medium text-primary hover:underline">
-            Creer le premier template
-          </button>
-        </div>
+        <AdminEmptyState
+          title="Aucun template pour le moment"
+          description="Creez votre premier modele d'email pour communiquer avec vos abonnes."
+          action={<AdminButton onClick={openCreate}>Creer le premier template</AdminButton>}
+        />
       ) : (
         <div className="space-y-4">
           {templates.map((t) => (
-            <div key={t.id} className="rounded-2xl border border-gray-200 bg-white p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">{t.name}</h4>
-                  <p className="text-sm text-gray-500">Sujet: {t.subject}</p>
+            <div key={t.id} className="admin-surface p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-slate-900">{t.name}</h4>
+                  <p className="mt-1 text-sm text-slate-500">Sujet : {t.subject}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => handleSend(t.id)} disabled={sending && sendId === t.id}
-                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:brightness-90 disabled:opacity-50">
+                <div className="flex flex-wrap items-center gap-2">
+                  <AdminButton className="px-3 py-1.5 text-xs" onClick={() => handleSend(t.id)} disabled={sending && sendId === t.id}>
                     {sending && sendId === t.id ? "Envoi..." : "Envoyer"}
-                  </button>
-                  <button onClick={() => openEdit(t)} className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                    Modifier
-                  </button>
-                  <button onClick={() => handleDelete(t.id)} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">
-                    Supprimer
-                  </button>
+                  </AdminButton>
+                  <AdminButton variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => openEdit(t)}>Modifier</AdminButton>
+                  <AdminButton variant="danger" className="px-3 py-1.5 text-xs" onClick={() => handleDelete(t.id)}>Supprimer</AdminButton>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

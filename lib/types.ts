@@ -43,11 +43,3 @@ export type GalleryItem = {
   category: string[];
   type: "image" | "video";
 };
-
-export type SiteSettings = {
-  siteName: string;
-  heroTitle: LocalizedText;
-  heroText: LocalizedText;
-  aboutSummary: LocalizedText;
-  donationCta: LocalizedText;
-};

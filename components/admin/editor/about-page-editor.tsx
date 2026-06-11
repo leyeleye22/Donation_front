@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { defaultAboutEditorContent, loadAboutContent, type AboutEditorContent } from "@/lib/admin/about-content";
 import { ImagePicker } from "@/components/admin/editor/image-picker";
 import { api } from "@/lib/api";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { PageHeader } from "@/components/admin/ui/page-header";
 
 function TextField({ label, value, onChange, helpText, multiline }: {
   label: string;
@@ -15,12 +17,12 @@ function TextField({ label, value, onChange, helpText, multiline }: {
   const Tag = multiline ? "textarea" : "input";
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-gray-700">{label}</label>
+      <label className="admin-label">{label}</label>
       <Tag
         value={value}
         onChange={(e: any) => onChange(e.target.value)}
         rows={multiline ? 3 : undefined}
-        className="w-full rounded-2xl border border-secondary/14 px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+        className="admin-input"
       />
       {helpText ? <p className="mt-2 text-sm leading-6 text-gray-500">{helpText}</p> : null}
     </div>
@@ -128,6 +130,7 @@ const steps = [
   { id: "association", label: "Association", title: "Presentation & portrait" },
   { id: "founder", label: "Fondateur", title: "Fondateur & recit" },
   { id: "content", label: "Contenus", title: "Valeurs, chronologie & actions" },
+  { id: "testimonials", label: "Temoignages", title: "Temoignages partenaires" },
   { id: "callout", label: "Callout", title: "Appel a action final" }
 ] as const;
 
@@ -161,18 +164,17 @@ export function AboutPageEditor() {
   }
 
   return (
-    <section className="space-y-8">
-      <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Editeur A propos</div>
-        <h1 className="mt-3 text-4xl font-bold text-gray-950">Modifier la page A propos pas a pas.</h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-600">
-          Hero, association, fondateur, valeurs et appel a action.
-        </p>
-      </div>
+    <AdminPage className="space-y-8">
+      <PageHeader
+        eyebrow="Site public"
+        title="Editeur — A propos"
+        description="Hero, association, fondateur, valeurs, trajectoire et temoignages."
+        meta={saved ? <span className="admin-badge-success">Enregistre</span> : null}
+      />
 
       <div className="rounded-[30px] bg-white p-5 shadow-[0_16px_44px_rgba(15,23,42,0.06)] ring-1 ring-secondary/10">
         <div className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">Edition pas a pas</div>
-        <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid gap-3 md:grid-cols-6">
           {steps.map((item, index) => {
             const active = index === step;
             const done = index < step;
@@ -275,6 +277,26 @@ export function AboutPageEditor() {
           {step === 4 ? (
             <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Etape 5</div>
+              <div className="mb-5 text-2xl font-bold text-gray-950">Temoignages</div>
+              <SubItemsField
+                label="Temoignages"
+                items={content.testimonials.map((t) => ({ title: t.name, text: t.text, location: t.location, role: t.role }))}
+                onChange={(items) => update("testimonials", items.map((i) => ({ name: i.title, text: i.text, location: (i as any).location || "", role: (i as any).role || "" })))}
+                extraFields={(item, _index, update) => (
+                  <div className="space-y-2">
+                    <input placeholder="Localisation" value={(item as any).location || ""} onChange={(e) => update({ ...item, location: e.target.value } as any)}
+                      className="w-full rounded-xl border border-secondary/14 px-4 py-3 text-base outline-none focus:border-primary" />
+                    <input placeholder="Role / Fonction" value={(item as any).role || ""} onChange={(e) => update({ ...item, role: e.target.value } as any)}
+                      className="w-full rounded-xl border border-secondary/14 px-4 py-3 text-base outline-none focus:border-primary" />
+                  </div>
+                )}
+              />
+            </div>
+          ) : null}
+
+          {step === 5 ? (
+            <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Etape 6</div>
               <div className="mb-5 text-2xl font-bold text-gray-950">Appel a action final</div>
               <div className="space-y-5">
                 <TextField label="Titre" value={content.calloutTitle} onChange={(v) => update("calloutTitle", v)} multiline />
@@ -316,6 +338,6 @@ export function AboutPageEditor() {
           </div>
         </div>
       </div>
-    </section>
+    </AdminPage>
   );
 }

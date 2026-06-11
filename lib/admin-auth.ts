@@ -1,12 +1,5 @@
 import { api } from "./api";
 
-export const ADMIN_SESSION_KEY = "entraide-admin-token";
-
-export type MockAdminSession = {
-  email: string;
-  loggedInAt: string;
-};
-
 export async function checkAdminSession(): Promise<boolean> {
   try {
     const user = await api.getMe();

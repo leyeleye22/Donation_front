@@ -14,6 +14,7 @@ type SectionKey =
   | "journal"
   | "transparency"
   | "gallery"
+  | "testimonials"
   | "donationCta"
   | "newsletter"
   | "footer";

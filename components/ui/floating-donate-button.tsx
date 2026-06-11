@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
+import { useDonateModal } from "@/lib/donate-modal-context";
 import { useSettings } from "@/lib/settings-context";
 
 export function FloatingDonateButton() {
   const pathname = usePathname();
   const settings = useSettings();
-  const [open, setOpen] = useState(false);
+  const { isOpen: open, openDonate, closeDonate } = useDonateModal();
   const [mounted, setMounted] = useState(false);
 
   const visible = useMemo(() =>
@@ -19,7 +21,7 @@ export function FloatingDonateButton() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false);
+        closeDonate();
       }
     };
 
@@ -27,7 +29,7 @@ export function FloatingDonateButton() {
     window.addEventListener("keydown", onKeyDown);
 
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [closeDonate]);
 
   if (!visible) return null;
 
@@ -35,7 +37,8 @@ export function FloatingDonateButton() {
     <>
       <div className="fixed bottom-5 right-5 z-[60] flex items-center gap-3">
         <button
-          onClick={() => setOpen(true)}
+          type="button"
+          onClick={openDonate}
           className={`floating-donate-button rounded-full border border-white/60 bg-primary px-5 py-3 text-sm font-semibold text-white shadow-2xl transition-all hover:brightness-90 md:text-base ${
             mounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
@@ -49,62 +52,31 @@ export function FloatingDonateButton() {
           <div className="w-full max-w-lg rounded-[32px] bg-white p-6 shadow-2xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-950 md:text-3xl">Chaque don sauve des vies</h2>
+                <h2 className="text-2xl font-bold text-gray-950 md:text-3xl">Soutenir l&apos;association</h2>
                 <p className="mt-2 text-sm leading-6 text-gray-500">
-                  Votre générosité permet de nourrir des familles, soigner des enfants et construire un avenir.
+                  Le paiement en ligne sera disponible prochainement. En attendant, contactez-nous pour faire un don ou parrainer un projet.
                 </p>
               </div>
               <button
-                onClick={() => setOpen(false)}
+                type="button"
+                onClick={closeDonate}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
               >
                 ✕
               </button>
             </div>
 
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-gray-400">Choisissez un montant</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { amount: 5000, impact: "Un repas pour 10 familles" },
-                { amount: 10000, impact: "Kits scolaires pour 5 enfants" },
-                { amount: 25000, impact: "Soins médicaux d'urgence" },
-                { amount: 50000, impact: "Parrainage d'un projet entier" }
-              ].map(({ amount, impact }) => (
-                <button
-                  key={amount}
-                  className="rounded-xl border-2 border-gray-100 px-4 py-4 text-left transition-all hover:border-primary hover:bg-orange-50"
-                >
-                  <div className="text-lg font-bold text-gray-900">{amount.toLocaleString("fr-FR")} FCFA</div>
-                  <div className="mt-1 text-xs leading-tight text-gray-500">{impact}</div>
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-4">
-              <input
-                type="number"
-                placeholder="Montant personnalisé"
-                className="w-full rounded-xl border-2 border-gray-100 px-4 py-4 text-gray-900 placeholder-gray-400 transition-colors focus:border-primary focus:outline-none focus:ring-0"
-              />
-            </div>
-
-            <div className="mt-4 flex items-center gap-3 rounded-xl bg-secondary/10 px-4 py-3">
-              <input type="checkbox" id="monthly" className="h-4 w-4 accent-secondary" />
-              <label htmlFor="monthly" className="text-sm font-medium text-gray-700">
-                Mensualiser mon don
-              </label>
+            <div className="rounded-2xl border border-secondary/15 bg-green-50/60 p-5 text-sm leading-7 text-gray-700">
+              Chaque contribution finance des actions concretes sur le terrain : eau, sante, education et aide alimentaire.
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <button className="rounded-button bg-primary px-6 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:brightness-90">
-                Soutenir maintenant
-              </button>
-              <button
-                onClick={() => setOpen(false)}
-                className="rounded-button border-2 border-gray-200 px-6 py-4 text-lg font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-800"
-              >
-                Plus tard
-              </button>
+              <Link href="/contact" onClick={closeDonate} className="btn-primary btn-lg w-full text-center">
+                Nous contacter
+              </Link>
+              <Link href="/projects" onClick={closeDonate} className="btn-outline btn-lg w-full text-center text-gray-600">
+                Voir les projets
+              </Link>
             </div>
           </div>
         </div>

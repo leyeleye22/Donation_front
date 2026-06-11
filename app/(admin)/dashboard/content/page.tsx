@@ -1,80 +1,83 @@
 import Link from "next/link";
+import { AdminCard } from "@/components/admin/ui/admin-card";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { PageHeader } from "@/components/admin/ui/page-header";
 
 const contentPages = [
   {
-    step: "1",
+    step: "01",
     title: "Accueil",
-    description: "Hero, banniere d'urgence, message principal, CTA, mission et newsletter.",
+    description: "Hero, urgence, message principal, CTA, mission et newsletter.",
     href: "/dashboard/content/home",
-    status: "Pret"
+    status: "Prioritaire",
+    tone: "warning" as const,
+    badgeClass: "admin-badge-warning",
   },
   {
-    step: "2",
+    step: "02",
     title: "A propos",
-    description: "Association, fondateur, valeurs, trajectoire et contenus explicatifs.",
+    description: "Association, fondateur, valeurs, trajectoire et preuves d'impact.",
     href: "/dashboard/content/about",
-    status: "Ensuite"
+    status: "Editorial",
+    badgeClass: "admin-badge-neutral",
   },
   {
-    step: "3",
+    step: "03",
     title: "Contact",
-    description: "Textes d'aide, messages, FAQ et micro-contenus d'orientation.",
+    description: "Textes d'aide, coordonnees, FAQ et orientation des visiteurs.",
     href: "/dashboard/content/contact",
-    status: "Ensuite"
-  }
+    status: "Support",
+    badgeClass: "admin-badge-info",
+  },
+];
+
+const workflow = [
+  { step: "1", title: "Choisir la page", detail: "Identifiez la page publique a mettre a jour." },
+  { step: "2", title: "Modifier le contenu", detail: "Textes, images, boutons et messages cles." },
+  { step: "3", title: "Publier", detail: "Enregistrez puis verifiez le rendu sur le site." },
 ];
 
 export default function AdminContentHubPage() {
   return (
-    <section className="space-y-8">
-      <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Centre de contenu</div>
-        <h1 className="mt-3 text-4xl font-bold text-gray-950">Choisir une page, puis suivre les etapes.</h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-600">
-          On reduit les decisions au minimum: choisir la page, modifier, verifier, enregistrer.
-        </p>
-      </div>
+    <AdminPage className="space-y-6">
+      <PageHeader
+        eyebrow="Site public"
+        title="Centre de contenu"
+        description="Gerez les pages visibles par le public. Chaque modification est refletee sur le site association."
+      />
 
-      <div className="rounded-[32px] bg-white p-7 shadow-[0_16px_44px_rgba(15,23,42,0.06)] ring-1 ring-secondary/10">
-        <div className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">Etapes simples</div>
+      <AdminCard padding="lg" variant="soft">
+        <div className="admin-eyebrow-alt mb-4">Workflow editorial</div>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[24px] bg-[#f7fbf4] p-5">
-            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white">1</div>
-            <div className="text-lg font-bold text-gray-950">Choisir la page</div>
-            <div className="mt-2 text-sm leading-6 text-gray-600">Accueil, A propos ou Contact.</div>
-          </div>
-          <div className="rounded-[24px] bg-[#fff8ef] p-5">
-            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white">2</div>
-            <div className="text-lg font-bold text-gray-950">Modifier</div>
-            <div className="mt-2 text-sm leading-6 text-gray-600">Texte, image, bouton ou message.</div>
-          </div>
-          <div className="rounded-[24px] bg-primary/6 p-5">
-            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white">3</div>
-            <div className="text-lg font-bold text-gray-950">Verifier</div>
-            <div className="mt-2 text-sm leading-6 text-gray-600">Utiliser l&apos;apercu avant d&apos;enregistrer.</div>
-          </div>
+          {workflow.map((item) => (
+            <div key={item.step} className="admin-surface p-5">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-sm font-bold text-white">
+                {item.step}
+              </div>
+              <div className="text-lg font-bold text-slate-900">{item.title}</div>
+              <div className="mt-2 text-sm leading-6 text-slate-500">{item.detail}</div>
+            </div>
+          ))}
         </div>
-      </div>
+      </AdminCard>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {contentPages.map((page) => (
-          <Link
-            key={page.href}
-            href={page.href}
-            className="rounded-[30px] border border-secondary/10 bg-white p-7 shadow-[0_16px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white">{page.step}</div>
-              <div className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                {page.status}
+          <Link key={page.href} href={page.href} className="group">
+            <AdminCard className="h-full transition group-hover:-translate-y-1 group-hover:border-primary/25 group-hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
+                  {page.step}
+                </div>
+                <span className={page.badgeClass}>{page.status}</span>
               </div>
-            </div>
-            <h2 className="mt-4 text-3xl font-bold text-gray-950">{page.title}</h2>
-            <p className="mt-3 text-base leading-8 text-gray-600">{page.description}</p>
-            <div className="mt-6 text-sm font-semibold text-secondary">Ouvrir l&apos;etape suivante</div>
+              <h2 className="mt-5 text-2xl font-bold text-slate-900">{page.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-500">{page.description}</p>
+              <div className="mt-6 text-sm font-semibold text-secondary">Ouvrir l&apos;editeur →</div>
+            </AdminCard>
           </Link>
         ))}
       </div>
-    </section>
+    </AdminPage>
   );
 }

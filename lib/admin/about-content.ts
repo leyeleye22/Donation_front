@@ -1,8 +1,6 @@
-import { aboutPageContent } from "@/lib/mock-data/page-sections";
 import { api } from "@/lib/api";
+import { emptyAboutEditorContent } from "@/lib/cms-empty";
 import { resolveImageUrl } from "@/lib/image-url";
-
-export const ABOUT_EDITOR_STORAGE_KEY = "entraide-admin-about-content";
 
 export type AboutEditorContent = {
   heroEyebrow: string;
@@ -29,34 +27,10 @@ export type AboutEditorContent = {
   calloutDescription: string;
   calloutPrimaryCta: string;
   calloutSecondaryCta: string;
+  testimonials: { name: string; location: string; text: string; role: string }[];
 };
 
-export const defaultAboutEditorContent: AboutEditorContent = {
-  heroEyebrow: aboutPageContent.hero.eyebrow,
-  heroTitle: aboutPageContent.hero.title,
-  heroDescription: aboutPageContent.hero.description,
-  stats: aboutPageContent.heroStats.map((s) => ({ value: s.value, label: s.label })),
-  associationBadge: aboutPageContent.association.badge,
-  associationTitle: aboutPageContent.association.title,
-  associationBody: [...aboutPageContent.association.body],
-  associationImage: aboutPageContent.association.image,
-  portrait: aboutPageContent.associationProfile.portrait,
-  story: [...aboutPageContent.associationProfile.story],
-  founderBadge: aboutPageContent.founder.badge,
-  founderTitle: aboutPageContent.founder.title,
-  founderSubtitle: aboutPageContent.founder.subtitle,
-  founderPortrait: aboutPageContent.founder.portrait,
-  founderQuote: aboutPageContent.founder.quote,
-  narrativeTitle: aboutPageContent.founderNarrative.title,
-  narrativeParagraphs: [...aboutPageContent.founderNarrative.paragraphs],
-  values: aboutPageContent.values.map((v) => ({ title: v.title, description: v.description })),
-  timeline: aboutPageContent.timeline.map((t) => ({ year: t.year, title: t.title, text: t.text })),
-  actionStories: aboutPageContent.actionStories.map((a) => ({ title: a.title, text: a.text, image: a.image })),
-  calloutTitle: aboutPageContent.callout.title,
-  calloutDescription: aboutPageContent.callout.description,
-  calloutPrimaryCta: aboutPageContent.callout.primaryCta,
-  calloutSecondaryCta: aboutPageContent.callout.secondaryCta,
-};
+export const defaultAboutEditorContent = emptyAboutEditorContent();
 
 function resolveContentImages(content: AboutEditorContent): AboutEditorContent {
   return {
@@ -70,8 +44,12 @@ function resolveContentImages(content: AboutEditorContent): AboutEditorContent {
 
 export async function loadAboutContent(): Promise<AboutEditorContent> {
   try {
-    const res = await api.getPage('about');
-    if (res?.content) return resolveContentImages(res.content as AboutEditorContent);
-  } catch (e) { console.error("loadAboutContent: failed to load", e); }
-  return defaultAboutEditorContent;
+    const res = await api.getPage("about");
+    if (res?.content) {
+      return resolveContentImages({ ...emptyAboutEditorContent(), ...(res.content as AboutEditorContent) });
+    }
+  } catch (e) {
+    console.error("loadAboutContent: failed to load", e);
+  }
+  return emptyAboutEditorContent();
 }

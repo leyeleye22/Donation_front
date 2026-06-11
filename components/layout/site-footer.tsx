@@ -26,32 +26,44 @@ export function SiteFooter() {
   }, []);
 
   return (
-    <footer className="border-t border-secondary/10 bg-[linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_60%,_#fff7ed_100%)] py-16 text-gray-950">
+    <footer className="border-t border-primary/10 bg-gradient-to-b from-white via-green-50/30 to-orange-50/40 py-16 text-gray-800">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-8">
         <div>
-          <img src={resolveImageUrl('/assets/logo.png')} alt="Logo" className="mb-5 w-16" />
+          <img src={resolveImageUrl("/assets/logo.png")} alt="Logo" className="mb-5 h-16 w-auto" />
           <p className="mb-6 max-w-xl text-sm leading-6 text-gray-600">
             {settings.footerIntro}
           </p>
-          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 sm:grid-cols-4">
-            <div><div className="text-2xl font-bold text-gray-950">50+</div><div>Projets realises</div></div>
-            <div><div className="text-2xl font-bold text-gray-950">2000+</div><div>Beneficiaires</div></div>
-            <div><div className="text-2xl font-bold text-gray-950">5</div><div>Themes d&apos;action</div></div>
-            <div><div className="text-2xl font-bold text-gray-950">10+</div><div>Partenaires</div></div>
+          <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+            {[
+              { value: "50+", label: "Projets realises" },
+              { value: "2000+", label: "Beneficiaires" },
+              { value: "5", label: "Themes d'action" },
+              { value: "10+", label: "Partenaires" },
+            ].map((stat, index) => (
+              <div
+                key={stat.label}
+                className={`rounded-2xl border bg-white/80 px-4 py-3 ${
+                  index % 2 === 0 ? "border-primary/10 shadow-warm" : "border-secondary/10 shadow-fresh"
+                }`}
+              >
+                <div className={`text-2xl font-bold ${index % 2 === 0 ? "text-primary" : "text-secondary"}`}>{stat.value}</div>
+                <div className="text-gray-600">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
         <div>
-          <h3 className="mb-4 text-lg font-semibold">Explorer</h3>
+          <h3 className="mb-4 text-lg font-semibold text-primary">Explorer</h3>
           <div className="space-y-3 text-sm text-gray-600">
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="block transition-colors hover:text-primary">
+              <Link key={item.href} href={item.href} className="block transition-colors hover:text-secondary">
                 {item.label.fr}
               </Link>
             ))}
           </div>
         </div>
         <div>
-          <h3 className="mb-4 text-lg font-semibold">Contact</h3>
+          <h3 className="mb-4 text-lg font-semibold text-secondary">Contact</h3>
           <div className="space-y-3 text-sm leading-6 text-gray-600">
             <p>Medine N 260, Mbour, Senegal</p>
             <p>+221 77 639 20 69</p>
@@ -59,13 +71,9 @@ export function SiteFooter() {
             <p>toleye2@gmail.com</p>
             <p>eapsh1@outlook.com</p>
           </div>
-          <div className="mt-6 rounded-2xl border border-primary/12 bg-white p-4 text-sm text-gray-600 shadow-[0_12px_32px_rgba(15,23,42,0.05)]">
-            <div className="mb-2 font-semibold text-primary">Transparence</div>
-            <p>Chaque projet fait l&apos;objet d&apos;un suivi regulier et d&apos;une publication detaillee dans notre journal.</p>
-          </div>
         </div>
       </div>
-      <div className="mx-auto mt-12 max-w-7xl border-t border-secondary/10 px-4 pt-6 text-sm text-gray-500 sm:px-6 lg:px-8">
+      <div className="mx-auto mt-12 max-w-7xl border-t border-primary/15 px-4 pt-6 text-sm text-gray-500 sm:px-6 lg:px-8">
         <p>{settings.footerCopyright}</p>
       </div>
     </footer>

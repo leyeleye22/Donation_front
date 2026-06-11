@@ -17,29 +17,29 @@ export function Pagination({ current, total, pageSize, onChange }: {
   }
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-100 px-1 py-3">
-      <p className="text-xs text-gray-500">
-        {Math.min((current - 1) * pageSize + 1, total)}&ndash;{Math.min(current * pageSize, total)} sur {total}
+    <div className="admin-surface flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-xs text-slate-500">
+        {Math.min((current - 1) * pageSize + 1, total)}–{Math.min(current * pageSize, total)} sur {total}
       </p>
       <div className="flex items-center gap-1">
         <button
+          type="button"
           onClick={() => onChange(current - 1)}
           disabled={current <= 1}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="admin-btn-ghost px-3 py-1.5 text-xs disabled:opacity-30"
         >
-          Pr&eacute;c&eacute;dent
+          Precedent
         </button>
         {pages.map((p, i) =>
           p === -1 ? (
-            <span key={`dot-${i}`} className="px-1 text-xs text-gray-300">...</span>
+            <span key={`dot-${i}`} className="px-1 text-xs text-slate-300">…</span>
           ) : (
             <button
               key={p}
+              type="button"
               onClick={() => onChange(p)}
-              className={`min-w-[32px] rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
-                p === current
-                  ? "bg-primary text-white"
-                  : "text-gray-600 hover:bg-gray-100"
+              className={`min-w-[34px] rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
+                p === current ? "bg-primary text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               {p}
@@ -47,9 +47,10 @@ export function Pagination({ current, total, pageSize, onChange }: {
           )
         )}
         <button
+          type="button"
           onClick={() => onChange(current + 1)}
           disabled={current >= totalPages}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="admin-btn-ghost px-3 py-1.5 text-xs disabled:opacity-30"
         >
           Suivant
         </button>

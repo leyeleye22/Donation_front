@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { AdminAlert } from "@/components/admin/ui/admin-alert";
+import { AdminButton } from "@/components/admin/ui/admin-button";
+import { AdminEmptyState } from "@/components/admin/ui/admin-empty-state";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { PageHeader } from "@/components/admin/ui/page-header";
 
 type Theme = {
   id: string;
@@ -74,66 +79,64 @@ export default function AdminThemesPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-gray-900">Themes</h1>
-          <p className="text-xs text-gray-500">{themes.length} themes &middot; Categories de projets</p>
-        </div>
-        <button onClick={startCreate} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:brightness-90">
-          + Ajouter un theme
-        </button>
-      </div>
+    <AdminPage className="space-y-6">
+      <PageHeader
+        eyebrow="Configuration"
+        title="Themes de projets"
+        description="Categories thematiques utilisees pour organiser les campagnes et la galerie."
+        actions={<AdminButton onClick={startCreate}>+ Ajouter un theme</AdminButton>}
+        meta={<span className="admin-badge-neutral">{themes.length} theme(s)</span>}
+      />
 
-      {msg ? <div className="rounded-lg bg-secondary/10 px-4 py-2 text-sm font-medium text-secondary">{msg}</div> : null}
+      {msg ? <AdminAlert tone={msg.includes("Erreur") ? "error" : "success"}>{msg}</AdminAlert> : null}
 
       {creating || editId ? (
-        <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900">{editId ? "Modifier le theme" : "Nouveau theme"}</h3>
+        <div className="admin-form-panel">
+          <h3 className="text-base font-bold text-slate-900">{editId ? "Modifier le theme" : "Nouveau theme"}</h3>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">Nom (fr)</label>
-            <input value={draft.name.fr} onChange={(e) => generateSlug(e.target.value)} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+            <label className="admin-label">Nom (fr)</label>
+            <input value={draft.name.fr} onChange={(e) => generateSlug(e.target.value)} className="admin-input" />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">Slug</label>
-            <input value={draft.slug} onChange={(e) => setDraft((p) => ({ ...p, slug: e.target.value }))} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+            <label className="admin-label">Slug</label>
+            <input value={draft.slug} onChange={(e) => setDraft((p) => ({ ...p, slug: e.target.value }))} className="admin-input" />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">Description (fr)</label>
-            <textarea value={draft.description.fr} onChange={(e) => setDraft((p) => ({ ...p, description: { fr: e.target.value } }))} rows={2} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+            <label className="admin-label">Description (fr)</label>
+            <textarea value={draft.description.fr} onChange={(e) => setDraft((p) => ({ ...p, description: { fr: e.target.value } }))} rows={2} className="admin-textarea" />
           </div>
           <div className="flex gap-3">
-            <button onClick={save} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:brightness-90">Enregistrer</button>
-            <button onClick={cancelForm} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">Annuler</button>
+            <AdminButton onClick={save}>Enregistrer</AdminButton>
+            <AdminButton variant="ghost" onClick={cancelForm}>Annuler</AdminButton>
           </div>
         </div>
       ) : null}
 
       {themes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-16 text-gray-400">
-          <p className="text-sm">Aucun theme. Cliquez sur &quot;+ Ajouter un theme&quot;.</p>
-        </div>
+        <AdminEmptyState
+          title="Aucun theme"
+          description='Cliquez sur "+ Ajouter un theme" pour creer votre premiere categorie.'
+          action={<AdminButton onClick={startCreate}>+ Ajouter un theme</AdminButton>}
+        />
       ) : (
-        <div className="divide-y divide-gray-50 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <div className="space-y-3">
           {themes.map((theme) => (
-            <div key={theme.id} className="flex items-center justify-between px-5 py-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-sm font-bold text-gray-500">
-                  {theme.name?.fr?.charAt(0).toUpperCase() || "?"}
-                </span>
-                <div>
-                  <div className="text-sm font-semibold text-gray-900">{theme.name?.fr || theme.slug}</div>
-                  <div className="text-xs text-gray-400">/{theme.slug} &middot; {theme.type}</div>
-                </div>
+            <div key={theme.id} className="admin-list-card">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-500">
+                {theme.name?.fr?.charAt(0).toUpperCase() || "?"}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-slate-900">{theme.name?.fr || theme.slug}</div>
+                <div className="text-xs text-slate-500">/{theme.slug} · {theme.type}</div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => startEdit(theme)} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50">Modifier</button>
-                <button onClick={() => remove(theme.id)} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-50">Supprimer</button>
+                <AdminButton variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => startEdit(theme)}>Modifier</AdminButton>
+                <AdminButton variant="danger" className="px-3 py-1.5 text-xs" onClick={() => remove(theme.id)}>Supprimer</AdminButton>
               </div>
             </div>
           ))}
         </div>
       )}
-    </section>
+    </AdminPage>
   );
 }

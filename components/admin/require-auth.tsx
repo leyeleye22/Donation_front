@@ -26,10 +26,11 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (!authorized) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
+      <div className="admin-page flex min-h-screen items-center justify-center">
+        <div className="admin-surface px-10 py-8 text-center">
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-500">Verification...</p>
+          <p className="admin-eyebrow-alt mt-5">Administration</p>
+          <p className="mt-2 text-sm text-slate-500">Verification de la session...</p>
         </div>
       </div>
     );

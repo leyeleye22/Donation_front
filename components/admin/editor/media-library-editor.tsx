@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { mapGalleryItem } from "@/lib/api-mappers";
 import { Pagination } from "@/components/admin/pagination";
+import { AdminButton } from "@/components/admin/ui/admin-button";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { PageHeader } from "@/components/admin/ui/page-header";
 
 type MediaItem = { id: string; path: string; name: string };
 
@@ -66,20 +69,18 @@ export function MediaLibraryEditor() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-gray-900">Bibliotheque media</h1>
-          <p className="text-xs text-gray-500">{items.length} fichiers</p>
-        </div>
-        <button onClick={handleUpload} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:brightness-90">
-          + Ajouter
-        </button>
-      </div>
+    <AdminPage className="space-y-6">
+      <PageHeader
+        eyebrow="Programmes & impact"
+        title="Mediatheque"
+        description="Fichiers images utilises dans les projets, le journal et le site public."
+        actions={<AdminButton onClick={handleUpload}>+ Ajouter des fichiers</AdminButton>}
+        meta={<span className="admin-badge-neutral">{items.length} fichier(s)</span>}
+      />
 
       <div className="grid gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {paginated.map((item) => (
-          <div key={item.id} className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div key={item.id} className="admin-surface group relative overflow-hidden p-0">
             <div className="aspect-square overflow-hidden">
               <img
                 src={item.path}
@@ -87,7 +88,7 @@ export function MediaLibraryEditor() {
                 className="h-full w-full object-cover transition-transform group-hover:scale-105"
               />
             </div>
-            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all group-hover:bg-black/30 group-hover:opacity-100">
+            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-primary/0 opacity-0 transition-all group-hover:bg-primary/35 group-hover:opacity-100">
               <button onClick={() => setViewer(item.path)} className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-lg">Voir</button>
               <button onClick={() => { setEditingId(item.id); setEditValue(item.name); }} className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-lg">Renommer</button>
               <button onClick={() => handleDelete(item.id)} className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">Suppr</button>
@@ -113,7 +114,7 @@ export function MediaLibraryEditor() {
       <Pagination current={page} total={items.length} pageSize={PAGE_SIZE} onChange={setPage} />
 
       {viewer ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setViewer(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4" onClick={() => setViewer(null)}>
           <div className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <img src={viewer} alt="" className="max-h-[80vh] w-full object-contain" />
             <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3">
@@ -123,6 +124,6 @@ export function MediaLibraryEditor() {
           </div>
         </div>
       ) : null}
-    </section>
+    </AdminPage>
   );
 }

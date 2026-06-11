@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { defaultContactEditorContent, loadContactContent, type ContactEditorContent } from "@/lib/admin/contact-content";
 import { api } from "@/lib/api";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { PageHeader } from "@/components/admin/ui/page-header";
 
 function TextField({ label, value, onChange, multiline }: {
   label: string; value: string; onChange: (value: string) => void; multiline?: boolean;
@@ -10,9 +12,9 @@ function TextField({ label, value, onChange, multiline }: {
   const Tag = multiline ? "textarea" : "input";
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-gray-700">{label}</label>
+      <label className="admin-label">{label}</label>
       <Tag value={value} onChange={(e: any) => onChange(e.target.value)} rows={multiline ? 3 : undefined}
-        className="w-full rounded-2xl border border-secondary/14 px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+        className="admin-input" />
     </div>
   );
 }
@@ -87,12 +89,13 @@ export function ContactPageEditor() {
   }
 
   return (
-    <section className="space-y-8">
-      <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Editeur Contact</div>
-        <h1 className="mt-3 text-4xl font-bold text-gray-950">Tous les elements de la page Contact.</h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-600">Hero, coordonnees, formulaire, cartes et FAQ.</p>
-      </div>
+    <AdminPage className="space-y-8">
+      <PageHeader
+        eyebrow="Site public"
+        title="Editeur — Contact"
+        description="Hero, coordonnees, formulaire, cartes d'information et FAQ."
+        meta={saved ? <span className="admin-badge-success">Enregistre</span> : null}
+      />
 
       <div className="grid gap-8 xl:grid-cols-2">
         <div className="space-y-6">
@@ -164,6 +167,6 @@ export function ContactPageEditor() {
           </div>
         </div>
       </div>
-    </section>
+    </AdminPage>
   );
 }

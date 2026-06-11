@@ -1,44 +1,61 @@
+import type { ComponentType } from "react";
+import {
+  IconDashboard,
+  IconDocument,
+  IconFolder,
+  IconMail,
+  IconSettings,
+} from "@/components/admin/icons";
+
 export type AdminNavItem = {
   label: string;
   href: string;
+  icon?: ComponentType<{ className?: string }>;
+  badge?: string;
 };
 
-export const adminNavigation = [
+export type AdminNavGroup = {
+  title: string;
+  items: AdminNavItem[];
+};
+
+export const adminNavigation: AdminNavGroup[] = [
   {
-    title: "Vue d'ensemble",
-    items: [{ label: "Dashboard", href: "/dashboard" }]
+    title: "Pilotage",
+    items: [{ label: "Tableau de bord", href: "/dashboard", icon: IconDashboard }],
   },
   {
-    title: "Contenu",
+    title: "Programmes & impact",
     items: [
-      { label: "Centre de contenu", href: "/dashboard/content" },
-      { label: "Accueil", href: "/dashboard/content/home" },
-      { label: "A propos", href: "/dashboard/content/about" },
-      { label: "Contact", href: "/dashboard/content/contact" }
-    ]
-  },
-  {
-    title: "Collections",
-    items: [
-      { label: "Projets", href: "/dashboard/projects" },
-      { label: "Journal", href: "/dashboard/journal" },
+      { label: "Projets", href: "/dashboard/projects", icon: IconFolder },
+      { label: "Journal terrain", href: "/dashboard/journal", icon: IconDocument },
       { label: "Galerie", href: "/dashboard/gallery" },
-      { label: "Media", href: "/dashboard/media" }
-    ]
+      { label: "Mediatheque", href: "/dashboard/media" },
+    ],
   },
   {
-    title: "Communication",
+    title: "Site public",
     items: [
-      { label: "Templates email", href: "/dashboard/email-templates" },
-      { label: "Newsletter", href: "/dashboard/newsletter" }
-    ]
+      { label: "Centre de contenu", href: "/dashboard/content", icon: IconDocument },
+      { label: "Page accueil", href: "/dashboard/content/home" },
+      { label: "Page a propos", href: "/dashboard/content/about" },
+      { label: "Page contact", href: "/dashboard/content/contact" },
+    ],
   },
   {
-    title: "Structure",
+    title: "Relations & confiance",
+    items: [
+      { label: "Messages", href: "/dashboard/messages", icon: IconMail },
+      { label: "Newsletter", href: "/dashboard/newsletter" },
+      { label: "Templates email", href: "/dashboard/email-templates" },
+    ],
+  },
+  {
+    title: "Configuration",
     items: [
       { label: "Themes", href: "/dashboard/themes" },
       { label: "Navigation", href: "/dashboard/navigation" },
-      { label: "Parametres", href: "/dashboard/settings" }
-    ]
-  }
-] as const;
+      { label: "Parametres", href: "/dashboard/settings", icon: IconSettings },
+    ],
+  },
+];

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { mapProject } from "@/lib/api-mappers";
+import { useSettings } from "@/lib/settings-context";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Project } from "@/lib/types";
 
 const statusFilters = [
@@ -44,6 +46,7 @@ function projectProgress(goalAmount: number, collectedAmount: number) {
 }
 
 export function ProjectsPageContent() {
+  const pageHero = useSettings().pageSettings["/projects"];
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
@@ -110,22 +113,80 @@ export function ProjectsPageContent() {
   };
 
   if (!loaded) {
-    return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement des projets...</div>;
+    return (
+      <div className="bg-white">
+        <section className="overflow-hidden bg-page-hero">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+            <div className="grid gap-10 lg:grid-cols-[0.88fr_1.12fr]">
+              <div>
+                <Skeleton className="mb-3 h-4 w-24" />
+                <Skeleton className="h-14 w-full max-w-[500px]" />
+                <Skeleton className="mt-6 h-6 w-full max-w-[450px]" />
+                <Skeleton className="mt-2 h-6 w-3/4 max-w-[400px]" />
+                <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-24 rounded-[24px]" />
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                <Skeleton className="h-[520px] rounded-[36px]" />
+                <div className="grid gap-4">
+                  <Skeleton className="h-40 rounded-[30px]" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-32 rounded-[24px]" />
+                    <Skeleton className="h-32 rounded-[24px]" />
+                  </div>
+                  <Skeleton className="h-32 rounded-[30px]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section className="py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-6 flex gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-10 w-28 rounded-full" />
+              ))}
+            </div>
+            <div className="mb-10 flex gap-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-10 w-36 rounded-full" />
+              ))}
+            </div>
+            <div className="grid gap-8 lg:grid-cols-[0.96fr_1.04fr]">
+              <div className="space-y-4">
+                <Skeleton className="h-12 rounded-[24px]" />
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-36 rounded-[30px]" />
+                ))}
+              </div>
+              <Skeleton className="h-[500px] rounded-[34px]" />
+            </div>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (
     <div className="bg-white">
-      <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.14),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.16),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_56%,_#fff7ed_100%)]">
+      <section className="overflow-hidden bg-page-hero">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <div className="grid gap-10 lg:grid-cols-[0.88fr_1.12fr]">
             <div className="flex flex-col justify-center">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Projets</p>
+              {pageHero?.heroEyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">{pageHero.heroEyebrow}</p> : null}
+              {pageHero?.heroTitle ? (
               <h1 className="max-w-4xl text-5xl font-bold leading-[1.04] text-gray-950 md:text-6xl">
-                Une page projet pensee pour tenir avec 70 campagnes et plus.
+                {pageHero.heroTitle}
               </h1>
+              ) : null}
+              {pageHero?.heroDescription ? (
               <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-                Certains projets sont deja accomplis, d&apos;autres sont en cours, d&apos;autres encore sont a venir. La page doit pouvoir gerer tout ce portefeuille sans s&apos;effondrer visuellement.
+                {pageHero.heroDescription}
               </p>
+              ) : null}
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-[24px] border border-primary/14 bg-primary/6 p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)]">
@@ -150,7 +211,7 @@ export function ProjectsPageContent() {
             <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="relative overflow-hidden rounded-[36px] shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
                 <img src={selectedProject.coverImage} alt={selectedProject.title.fr} className="h-[520px] w-full object-cover transition duration-700 hover:scale-[1.03]" />
-                <div className="absolute inset-0 bg-gradient-to-t from-secondary/85 via-secondary/12 to-transparent" />
+                <div className="overlay-image" />
                 <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-6">
                   <div className="rounded-full bg-white/88 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-secondary backdrop-blur">
                     {themeLabel[selectedProject.theme]}
@@ -181,7 +242,7 @@ export function ProjectsPageContent() {
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Impact</div>
                     <div className="mt-2 text-xl font-bold text-gray-950">{selectedProject.beneficiaryLabel.fr}</div>
                   </div>
-                  <div className="rounded-[24px] bg-[#f7fbf4] p-5">
+                  <div className="rounded-[24px] bg-orange-50/50 p-5">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Objectif</div>
                     <div className="mt-2 text-xl font-bold text-gray-950">{selectedProject.goalAmount.toLocaleString("fr-FR")} FCFA</div>
                   </div>
@@ -211,11 +272,7 @@ export function ProjectsPageContent() {
               <button
                 key={filter.id}
                 onClick={() => setActiveStatus(filter.id)}
-                className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                  activeStatus === filter.id
-                    ? "bg-primary text-white shadow-[0_12px_30px_rgba(239,146,33,0.22)]"
-                    : "bg-white text-gray-700 ring-1 ring-secondary/14 hover:text-secondary"
-                }`}
+                className={activeStatus === filter.id ? "chip-active" : "chip-inactive"}
               >
                 {filter.label}
               </button>
@@ -227,11 +284,7 @@ export function ProjectsPageContent() {
               <button
                 key={filter.id}
                 onClick={() => setActiveTheme(filter.id)}
-                className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                  activeTheme === filter.id
-                    ? "bg-secondary text-white shadow-[0_12px_30px_rgba(65,182,75,0.22)]"
-                    : "bg-white text-gray-700 ring-1 ring-secondary/14 hover:text-secondary"
-                }`}
+                className={activeTheme === filter.id ? "chip-active-secondary" : "chip-inactive"}
               >
                 {filter.label}
               </button>
@@ -240,7 +293,7 @@ export function ProjectsPageContent() {
 
           <div className="grid gap-8 lg:grid-cols-[0.96fr_1.04fr]">
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-[24px] bg-[#f7fbf4] px-5 py-4">
+              <div className="flex items-center justify-between rounded-[24px] bg-orange-50/50 px-5 py-4">
                 <div className="text-sm text-gray-600">
                   <span className="font-semibold text-gray-950">{visibleProjects.length}</span> projets trouves
                 </div>
@@ -294,7 +347,7 @@ export function ProjectsPageContent() {
                       <div className="text-sm text-gray-600">Clique la carte pour changer l&apos;apercu a droite.</div>
                       <Link
                         href={`/projects/${project.slug}`}
-                        className="rounded-button bg-primary px-5 py-2.5 text-center text-sm font-semibold text-white shadow-[0_12px_30px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                        className="btn-primary btn-sm"
                       >
                         Voir plus sur ce projet
                       </Link>
@@ -342,7 +395,7 @@ export function ProjectsPageContent() {
               <div className="overflow-hidden rounded-[34px] border border-secondary/12 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
                 <div className="relative">
                   <img src={selectedProject.coverImage} alt={selectedProject.title.fr} className="h-[260px] w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/75 via-secondary/10 to-transparent" />
+                  <div className="overlay-image-soft" />
                   <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-5">
                     <div className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-secondary">
                       {themeLabel[selectedProject.theme]}
@@ -390,7 +443,7 @@ export function ProjectsPageContent() {
                     />
                   </div>
 
-                  <div className="mb-6 rounded-[24px] bg-[#f7fbf4] p-5">
+                  <div className="mb-6 rounded-[24px] bg-orange-50/50 p-5">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Lecture rapide</div>
                     <p className="mt-2 text-sm leading-7 text-gray-700">
                       Clique un projet a gauche pour changer ce panneau. Il reste compact et visible pour eviter les grands espaces blancs.
@@ -400,11 +453,11 @@ export function ProjectsPageContent() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Link
                       href={`/projects/${selectedProject.slug}`}
-                      className="rounded-button bg-primary px-6 py-3.5 text-center text-base font-semibold text-white shadow-[0_14px_32px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                      className="btn-primary btn-md"
                     >
                       Voir plus sur ce projet
                     </Link>
-                    <button className="rounded-button border border-secondary/18 bg-white px-6 py-3.5 text-base font-semibold text-secondary transition hover:bg-secondary/6">
+                    <button type="button" className="btn-outline btn-md">
                       Faire un don
                     </button>
                   </div>

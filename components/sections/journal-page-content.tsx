@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { mapPost } from "@/lib/api-mappers";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/lib/format-date";
+import { useSettings } from "@/lib/settings-context";
 import type { Post } from "@/lib/types";
 
 const categoryFilters = [
@@ -23,10 +26,11 @@ const categoryLabel: Record<(typeof categoryFilters)[number]["id"], string> = {
 const PAGE_SIZE = 6;
 
 export function JournalPageContent() {
+  const pageHero = useSettings().pageSettings["/journal"];
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    api.getPosts().then((res) => {
+    api.getPosts("published=1").then((res) => {
       if (res?.data) setAllPosts((res.data || []).map(mapPost));
       setLoaded(true);
     }).catch((e) => { console.error("JournalPageContent: failed to load posts", e); setLoaded(true); });
@@ -92,22 +96,81 @@ export function JournalPageContent() {
   const imageStrip = [...allPosts, ...allPosts];
 
   if (!loaded || allPosts.length === 0) {
-    return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement des articles...</div>;
+    return (
+      <div className="bg-white">
+        <section className="overflow-hidden bg-page-hero">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
+            <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <Skeleton className="mb-3 h-4 w-24" />
+                <Skeleton className="h-14 w-full max-w-[600px]" />
+                <Skeleton className="mt-6 h-6 w-full max-w-[500px]" />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-24 rounded-[24px]" />
+                ))}
+              </div>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <Skeleton className="h-[560px] rounded-[36px]" />
+              <div className="grid gap-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-32 rounded-[30px]" />
+                ))}
+                <Skeleton className="h-36 rounded-[30px]" />
+              </div>
+            </div>
+          </div>
+        </section>
+        <section className="border-y border-secondary/10 bg-white py-5">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-4 overflow-hidden">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-32 w-48 flex-shrink-0 rounded-[24px] sm:h-36 sm:w-60" />
+              ))}
+            </div>
+          </div>
+        </section>
+        <section className="py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-6 flex gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-10 w-28 rounded-full" />
+              ))}
+            </div>
+            <div className="grid gap-8 lg:grid-cols-[0.96fr_1.04fr]">
+              <div className="space-y-4">
+                <Skeleton className="h-12 rounded-[24px]" />
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-32 rounded-[30px]" />
+                ))}
+              </div>
+              <Skeleton className="h-[500px] rounded-[34px]" />
+            </div>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (
     <div className="bg-white">
-      <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.18),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.16),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_58%,_#fff7ed_100%)]">
+      <section className="overflow-hidden bg-page-hero">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
           <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.26em] text-primary">Journal</p>
+              {pageHero?.heroEyebrow ? <p className="page-eyebrow-alt mb-3">{pageHero.heroEyebrow}</p> : null}
+              {pageHero?.heroTitle ? (
               <h1 className="text-5xl font-bold leading-[1.04] text-gray-950 md:text-6xl">
-                Images, actions, suivis: un journal qui donne envie d&apos;ouvrir les articles.
+                {pageHero.heroTitle}
               </h1>
+              ) : null}
+              {pageHero?.heroDescription ? (
               <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-                Ici on ne veut pas une simple liste d&apos;actualites. On veut un espace vivant, editorial et tres visuel pour raconter le terrain, les projets et la mission.
+                {pageHero.heroDescription}
               </p>
+              ) : null}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
@@ -129,7 +192,7 @@ export function JournalPageContent() {
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="relative overflow-hidden rounded-[36px] shadow-[0_24px_80px_rgba(15,23,42,0.14)]">
               <img src={heroPost.image} alt={heroPost.title.fr} className="journal-hero-slide h-[560px] w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-secondary/88 via-secondary/18 to-transparent" />
+              <div className="overlay-image" />
 
               <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-6">
                 <div className="rounded-full bg-white/88 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-secondary backdrop-blur">
@@ -144,20 +207,20 @@ export function JournalPageContent() {
                 <div className="max-w-3xl rounded-[28px] border border-white/45 bg-white/90 p-6 backdrop-blur">
                   <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                     <span>{heroPost.location.fr}</span>
-                    <span>{heroPost.createdAt}</span>
+                    <span>{formatDate(heroPost.createdAt)}</span>
                   </div>
                   <h2 className="mt-3 text-3xl font-bold text-gray-950 md:text-4xl">{heroPost.title.fr}</h2>
                   <p className="mt-3 max-w-2xl text-base leading-7 text-gray-700">{heroPost.excerpt.fr}</p>
                   <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                     <Link
                       href={`/journal/${heroPost.slug}`}
-                      className="rounded-button bg-primary px-6 py-3.5 text-center font-semibold text-white shadow-[0_16px_36px_rgba(239,146,33,0.24)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                      className="btn-primary btn-md"
                     >
                       Lire l&apos;article
                     </Link>
                     <Link
                       href="/projects"
-                      className="rounded-button border border-secondary/18 bg-white px-6 py-3.5 text-center font-semibold text-secondary transition hover:bg-secondary/6"
+                      className="btn-outline btn-md"
                     >
                       Explorer les projets
                     </Link>
@@ -218,7 +281,7 @@ export function JournalPageContent() {
             {imageStrip.map((post, index) => (
               <div key={`${post.id}-${index}`} className="relative overflow-hidden rounded-[24px]">
                 <img src={post.image} alt={post.title.fr} className="h-32 w-48 object-cover sm:h-36 sm:w-60" />
-                <div className="absolute inset-0 bg-gradient-to-t from-secondary/55 to-transparent" />
+                <div className="overlay-image-soft" />
                 <div className="absolute bottom-3 left-3 text-xs font-semibold uppercase tracking-[0.16em] text-white">
                   {categoryLabel[post.category]}
                 </div>
@@ -248,7 +311,7 @@ export function JournalPageContent() {
 
           <div className="grid gap-8 lg:grid-cols-[0.96fr_1.04fr]">
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-[24px] bg-[#f7fbf4] px-5 py-4">
+              <div className="flex items-center justify-between rounded-[24px] bg-orange-50/50 px-5 py-4">
                 <div className="text-sm text-gray-600">
                   <span className="font-semibold text-gray-950">{visiblePosts.length}</span> articles trouves
                 </div>
@@ -280,7 +343,7 @@ export function JournalPageContent() {
                         <div className="min-w-0">
                           <div className="mb-2 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
                             <span className={active ? "text-primary" : "text-secondary"}>{post.location.fr}</span>
-                            <span>{post.createdAt}</span>
+                            <span>{formatDate(post.createdAt)}</span>
                             <span>{post.readTime}</span>
                           </div>
                           <h2 className="text-2xl font-bold text-gray-950">{post.title.fr}</h2>
@@ -293,7 +356,7 @@ export function JournalPageContent() {
                       <div className="text-sm text-gray-600">Clique la carte pour voir l&apos;apercu a droite.</div>
                       <Link
                         href={`/journal/${post.slug}`}
-                        className="rounded-button bg-primary px-5 py-2.5 text-center text-sm font-semibold text-white shadow-[0_12px_30px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                        className="btn-primary btn-sm"
                       >
                         Lire l&apos;article
                       </Link>
@@ -341,7 +404,7 @@ export function JournalPageContent() {
               <div className="overflow-hidden rounded-[34px] border border-secondary/12 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
                 <div className="relative">
                   <img src={selectedPost.image} alt={selectedPost.title.fr} className="h-[280px] w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/75 via-secondary/10 to-transparent" />
+                  <div className="overlay-image-soft" />
                   <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-5">
                     <div className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-secondary">
                       {categoryLabel[selectedPost.category]}
@@ -366,11 +429,11 @@ export function JournalPageContent() {
                     </div>
                     <div className="rounded-2xl bg-secondary/6 p-5">
                       <div className="text-sm text-gray-500">Publication</div>
-                      <div className="mt-1 font-bold text-gray-950">{selectedPost.createdAt}</div>
+                      <div className="mt-1 font-bold text-gray-950">{formatDate(selectedPost.createdAt)}</div>
                     </div>
                   </div>
 
-                  <div className="mb-6 rounded-[24px] bg-[#f7fbf4] p-5">
+                  <div className="mb-6 rounded-[24px] bg-orange-50/50 p-5">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Apercu article</div>
                     <p className="mt-2 text-sm leading-7 text-gray-700">{selectedPost.content.fr}</p>
                   </div>
@@ -378,13 +441,13 @@ export function JournalPageContent() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Link
                       href={`/journal/${selectedPost.slug}`}
-                      className="rounded-button bg-primary px-6 py-3.5 text-center text-base font-semibold text-white shadow-[0_14px_32px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                      className="btn-primary btn-md"
                     >
                       Ouvrir l&apos;article
                     </Link>
                     <Link
                       href="/projects"
-                      className="rounded-button border border-secondary/18 bg-white px-6 py-3.5 text-center text-base font-semibold text-secondary transition hover:bg-secondary/6"
+                      className="btn-outline btn-md"
                     >
                       Voir les projets
                     </Link>

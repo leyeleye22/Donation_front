@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { checkAdminSession } from "@/lib/admin-auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function AdminSessionGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,14 +27,14 @@ export function AdminSessionGuard({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <section className="min-h-screen bg-[linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_100%)] py-20">
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <div className="rounded-[32px] border border-secondary/10 bg-white p-10 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary">Admin</div>
-            <h1 className="mt-3 text-3xl font-bold text-gray-950">Chargement de l&apos;espace admin...</h1>
-          </div>
+      <div className="admin-page flex min-h-screen items-center justify-center py-20">
+        <div className="admin-surface w-full max-w-md px-8 py-10 text-center">
+          <p className="admin-eyebrow">Administration</p>
+          <Skeleton className="mx-auto mt-4 h-8 w-56 rounded-xl" />
+          <Skeleton className="mx-auto mt-3 h-4 w-40 rounded-xl" />
+          <p className="mt-6 text-sm text-slate-500">Chargement de l&apos;espace admin...</p>
         </div>
-      </section>
+      </div>
     );
   }
 

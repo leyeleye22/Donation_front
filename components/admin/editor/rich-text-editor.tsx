@@ -1,130 +1,287 @@
 "use client";
 
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
-import Color from "@tiptap/extension-color";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { useEffect } from "react";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import TextAlign from "@tiptap/extension-text-align";
+import { api } from "@/lib/api";
+import { mapGalleryItem } from "@/lib/api-mappers";
 
 type RichTextEditorProps = {
-  label: string;
   value: string;
-  onChange: (value: string) => void;
-  helpText?: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
 };
 
-export function RichTextEditor({ label, value, onChange, helpText }: RichTextEditorProps) {
+function ToolbarButton({
+  active,
+  onClick,
+  title,
+  children,
+  disabled,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  title: string;
+  children: ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-semibold transition ${
+        active
+          ? "bg-primary text-white shadow-sm"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+      } disabled:cursor-not-allowed disabled:opacity-40`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ToolbarDivider() {
+  return <span className="mx-1 h-6 w-px bg-slate-200" />;
+}
+
+export function RichTextEditor({
+  value,
+  onChange,
+  placeholder = "Commencez a ecrire votre article...",
+}: RichTextEditorProps) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const syncingRef = useRef(false);
+
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
-      StarterKit,
-      Link.configure({ openOnClick: false }),
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+      }),
       Underline,
-      TextStyle,
-      Color
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: "text-primary underline" },
+      }),
+      Image.configure({
+        HTMLAttributes: { class: "rich-editor-image" },
+      }),
+      Placeholder.configure({ placeholder }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
-    content: value,
+    content: value || "",
+    onUpdate: ({ editor: ed }) => {
+      if (syncingRef.current) return;
+      onChange(ed.getHTML());
+    },
     editorProps: {
       attributes: {
-        class:
-          "min-h-[180px] rounded-b-[20px] border border-t-0 border-secondary/12 bg-white px-4 py-4 text-base leading-7 text-gray-800 outline-none"
-      }
+        class: "rich-editor-content min-h-[360px] px-4 py-4 focus:outline-none",
+      },
     },
-    onUpdate({ editor: currentEditor }) {
-      onChange(currentEditor.getHTML());
-    },
-    immediatelyRender: false
   });
 
   useEffect(() => {
     if (!editor) return;
-    if (editor.getHTML() !== value) {
-      editor.commands.setContent(value, { emitUpdate: false });
-    }
+    const current = editor.getHTML();
+    const next = value || "";
+    if (current === next || (current === "<p></p>" && !next)) return;
+    syncingRef.current = true;
+    editor.commands.setContent(next || "", { emitUpdate: false });
+    syncingRef.current = false;
   }, [editor, value]);
 
-  if (!editor) return null;
+  const setLink = useCallback(() => {
+    if (!editor) return;
+    const previous = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("URL du lien", previous || "https://");
+    if (url === null) return;
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  }, [editor]);
 
-  const colorButtons = [
-    { label: "N", value: "#111827", title: "Noir" },
-    { label: "V", value: "#41b64b", title: "Vert" },
-    { label: "O", value: "#ef9221", title: "Orange" }
-  ];
+  const insertImage = useCallback(
+    async (file: File) => {
+      if (!editor || !file.type.startsWith("image/")) return;
+      try {
+        const res = await api.uploadMedia(file, { fr: file.name.replace(/\.[^/.]+$/, "") });
+        const mapped = mapGalleryItem(res);
+        editor.chain().focus().setImage({ src: mapped.image, alt: mapped.title.fr || file.name }).run();
+      } catch (err) {
+        console.error("RichTextEditor: upload failed", err);
+      }
+    },
+    [editor],
+  );
 
-  const toolbarButtonClass =
-    "flex h-9 min-w-9 items-center justify-center rounded-xl border border-secondary/10 bg-white px-3 text-sm font-semibold text-gray-700 transition hover:border-secondary/20 hover:bg-secondary/5";
+  const insertImageFromUrl = useCallback(() => {
+    if (!editor) return;
+    const url = window.prompt("URL de l'image");
+    if (!url) return;
+    editor.chain().focus().setImage({ src: url }).run();
+  }, [editor]);
+
+  if (!editor) {
+    return <div className="rich-editor-shell min-h-[420px] animate-pulse rounded-2xl bg-slate-50" />;
+  }
 
   return (
-    <div>
-      <div className="mb-2 block text-sm font-semibold text-gray-700">{label}</div>
-      <div className="overflow-hidden rounded-[22px] border border-secondary/12 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-        <div className="flex flex-wrap items-center gap-2 border-b border-secondary/10 bg-[#f8faf7] px-3 py-3">
-          <button
-            type="button"
-            title="Gras"
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`${toolbarButtonClass} ${editor.isActive("bold") ? "border-primary/20 bg-primary/10 text-primary" : ""}`}
-          >
-            B
-          </button>
-          <button
-            type="button"
-            title="Italique"
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`${toolbarButtonClass} italic ${editor.isActive("italic") ? "border-primary/20 bg-primary/10 text-primary" : ""}`}
-          >
-            I
-          </button>
-          <button
-            type="button"
-            title="Souligne"
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`${toolbarButtonClass} underline ${editor.isActive("underline") ? "border-primary/20 bg-primary/10 text-primary" : ""}`}
-          >
-            U
-          </button>
-          <button
-            type="button"
-            title="Liste"
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`${toolbarButtonClass} ${editor.isActive("bulletList") ? "border-primary/20 bg-primary/10 text-primary" : ""}`}
-          >
-            •
-          </button>
-          <button
-            type="button"
-            title="Citation"
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`${toolbarButtonClass} ${editor.isActive("blockquote") ? "border-primary/20 bg-primary/10 text-primary" : ""}`}
-          >
-            "
-          </button>
-          <button
-            type="button"
-            title="Titre"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`${toolbarButtonClass} ${editor.isActive("heading", { level: 3 }) ? "border-primary/20 bg-primary/10 text-primary" : ""}`}
-          >
-            H
-          </button>
-          <div className="mx-1 h-6 w-px bg-secondary/10" />
-          {colorButtons.map((color) => (
-            <button
-              key={color.value}
-              type="button"
-              title={color.title}
-              onClick={() => editor.chain().focus().setColor(color.value).run()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-secondary/10 bg-white text-xs font-bold text-gray-700 transition hover:border-secondary/20 hover:bg-secondary/5"
-              style={{ color: color.value }}
-            >
-              {color.label}
-            </button>
-          ))}
-        </div>
-        <EditorContent editor={editor} />
+    <div className="rich-editor-shell overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-100 bg-slate-50/90 px-2 py-2">
+        <ToolbarButton
+          title="Gras"
+          active={editor.isActive("bold")}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+        >
+          B
+        </ToolbarButton>
+        <ToolbarButton
+          title="Italique"
+          active={editor.isActive("italic")}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+        >
+          <span className="italic">I</span>
+        </ToolbarButton>
+        <ToolbarButton
+          title="Souligne"
+          active={editor.isActive("underline")}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+        >
+          <span className="underline">U</span>
+        </ToolbarButton>
+        <ToolbarButton
+          title="Barre"
+          active={editor.isActive("strike")}
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+        >
+          <span className="line-through">S</span>
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <ToolbarButton
+          title="Titre 2"
+          active={editor.isActive("heading", { level: 2 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        >
+          H2
+        </ToolbarButton>
+        <ToolbarButton
+          title="Titre 3"
+          active={editor.isActive("heading", { level: 3 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        >
+          H3
+        </ToolbarButton>
+        <ToolbarButton
+          title="Paragraphe"
+          active={editor.isActive("paragraph")}
+          onClick={() => editor.chain().focus().setParagraph().run()}
+        >
+          P
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <ToolbarButton
+          title="Liste a puces"
+          active={editor.isActive("bulletList")}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+        >
+          •
+        </ToolbarButton>
+        <ToolbarButton
+          title="Liste numerotee"
+          active={editor.isActive("orderedList")}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        >
+          1.
+        </ToolbarButton>
+        <ToolbarButton
+          title="Citation"
+          active={editor.isActive("blockquote")}
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        >
+          "
+        </ToolbarButton>
+        <ToolbarButton title="Separateur" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+          —
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <ToolbarButton
+          title="Aligner a gauche"
+          active={editor.isActive({ textAlign: "left" })}
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+        >
+          ⬅
+        </ToolbarButton>
+        <ToolbarButton
+          title="Centrer"
+          active={editor.isActive({ textAlign: "center" })}
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+        >
+          ↔
+        </ToolbarButton>
+        <ToolbarButton
+          title="Aligner a droite"
+          active={editor.isActive({ textAlign: "right" })}
+          onClick={() => editor.chain().focus().setTextAlign("right").run()}
+        >
+          ➡
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <ToolbarButton title="Lien" active={editor.isActive("link")} onClick={setLink}>
+          🔗
+        </ToolbarButton>
+        <ToolbarButton title="Image depuis fichier" onClick={() => fileRef.current?.click()}>
+          🖼
+        </ToolbarButton>
+        <ToolbarButton title="Image depuis URL" onClick={insertImageFromUrl}>
+          URL
+        </ToolbarButton>
+        <ToolbarButton
+          title="Annuler"
+          disabled={!editor.can().undo()}
+          onClick={() => editor.chain().focus().undo().run()}
+        >
+          ↶
+        </ToolbarButton>
+        <ToolbarButton
+          title="Retablir"
+          disabled={!editor.can().redo()}
+          onClick={() => editor.chain().focus().redo().run()}
+        >
+          ↷
+        </ToolbarButton>
       </div>
-      {helpText ? <p className="mt-2 text-sm leading-6 text-gray-500">{helpText}</p> : null}
+
+      <EditorContent editor={editor} />
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) insertImage(file);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }

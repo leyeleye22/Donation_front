@@ -2,24 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { loadGlobalSettings, saveGlobalSettings, type GlobalSettings, defaultGlobalSettings } from "@/lib/admin/global-settings";
-
-const SETTINGS_STORAGE_KEY = "entraide-admin-nav-items";
+import { AdminCard } from "@/components/admin/ui/admin-card";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { AdminTabs } from "@/components/admin/ui/admin-tabs";
+import { PageHeader } from "@/components/admin/ui/page-header";
 
 const allRoutes = ["/", "/about", "/projects", "/journal", "/gallery", "/contact"];
 const routeLabels: Record<string, string> = {
   "/": "Accueil",
-  "/about": "À propos",
+  "/about": "A propos",
   "/projects": "Projets",
-  "/journal": "Actualités",
+  "/journal": "Actualites",
   "/gallery": "Galerie",
-  "/contact": "Contact"
+  "/contact": "Contact",
 };
 
 const sectionLabels: Record<string, string> = {
-  emergencyBanner: "Bannière d'urgence",
+  emergencyBanner: "Banniere d'urgence",
   hero: "Hero",
   trustBar: "Barre de confiance",
-  entryPoints: "Points d'entrée",
+  entryPoints: "Points d'entree",
   projects: "Projets",
   mission: "Mission",
   journal: "Journal",
@@ -27,13 +29,13 @@ const sectionLabels: Record<string, string> = {
   gallery: "Galerie",
   donationCta: "CTA Don",
   newsletter: "Newsletter",
-  footer: "Footer"
+  footer: "Footer",
 };
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<GlobalSettings>(defaultGlobalSettings);
   const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState<"general" | "pages" | "floating">("general");
+  const [activeTab, setActiveTab] = useState("general");
 
   useEffect(() => {
     loadGlobalSettings().then(setSettings);
@@ -60,9 +62,9 @@ export default function AdminSettingsPage() {
         ...settings.pageVisibility,
         [page]: {
           ...settings.pageVisibility[page],
-          [section]: !current
-        }
-      }
+          [section]: !current,
+        },
+      },
     };
     setSettings(updated);
     saveGlobalSettings(updated);
@@ -70,141 +72,114 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-gray-900">Paramètres</h1>
-          <p className="text-xs text-gray-500">Contrôle global du site, pages, visibilité et CTA</p>
-        </div>
-        {saved ? <span className="text-xs font-semibold text-secondary">Enregistré</span> : null}
-      </div>
+    <AdminPage className="space-y-6">
+      <PageHeader
+        eyebrow="Configuration"
+        title="Parametres globaux"
+        description="Controlez le nom du site, les CTA, la visibilite des sections et le bouton flottant de don."
+        meta={saved ? <span className="admin-badge-success">Enregistre</span> : null}
+      />
 
-      <div className="flex gap-2 border-b border-gray-100 pb-px">
-        {([["general", "Général"], ["pages", "Pages"], ["floating", "Bouton flottant"]] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === key ? "border-b-2 border-primary text-primary" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <AdminTabs
+        tabs={[
+          { id: "general", label: "General" },
+          { id: "pages", label: "Visibilite pages" },
+          { id: "floating", label: "Bouton flottant" },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
       {activeTab === "general" ? (
-        <div className="space-y-5">
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold text-gray-900">Informations générales</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Nom du site</label>
-                <input
-                  value={settings.siteName}
-                  onChange={(e) => update({ siteName: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Texte du bouton Don</label>
-                <input
-                  value={settings.donationCtaText}
-                  onChange={(e) => update({ donationCtaText: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Copyright footer</label>
-                <input
-                  value={settings.footerCopyright}
-                  onChange={(e) => update({ footerCopyright: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Texte d&apos;intro footer</label>
-                <textarea
-                  value={settings.footerIntro}
-                  onChange={(e) => update({ footerIntro: e.target.value })}
-                  rows={2}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                />
-              </div>
+        <AdminCard padding="lg">
+          <h2 className="text-base font-bold text-slate-900">Informations generales</h2>
+          <div className="mt-5 space-y-4">
+            <div>
+              <label className="admin-label">Nom du site</label>
+              <input value={settings.siteName} onChange={(e) => update({ siteName: e.target.value })} className="admin-input" />
+            </div>
+            <div>
+              <label className="admin-label">Texte du bouton Don</label>
+              <input value={settings.donationCtaText} onChange={(e) => update({ donationCtaText: e.target.value })} className="admin-input" />
+            </div>
+            <div>
+              <label className="admin-label">Copyright footer</label>
+              <input value={settings.footerCopyright} onChange={(e) => update({ footerCopyright: e.target.value })} className="admin-input" />
+            </div>
+            <div>
+              <label className="admin-label">Intro footer</label>
+              <textarea value={settings.footerIntro} onChange={(e) => update({ footerIntro: e.target.value })} rows={2} className="admin-textarea" />
             </div>
           </div>
-        </div>
+        </AdminCard>
       ) : null}
 
       {activeTab === "pages" ? (
         <div className="space-y-4">
           {allRoutes.map((route) => (
-            <div key={route} className="rounded-xl border border-gray-100 bg-white shadow-sm">
-              <div className="border-b border-gray-50 px-5 py-3">
-                <span className="text-sm font-semibold text-gray-900">{routeLabels[route]}</span>
-                <span className="ml-2 text-xs text-gray-400">{route}</span>
+            <AdminCard key={route} padding="lg">
+              <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <span className="font-semibold text-slate-900">{routeLabels[route]}</span>
+                <span className="admin-badge-neutral">{route}</span>
               </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 px-5 py-4 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
                 {Object.entries(sectionLabels).map(([key, label]) => (
-                  <label key={key} className="flex cursor-pointer items-center gap-2 text-sm">
+                  <label key={key} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
                     <input
                       type="checkbox"
                       checked={settings.pageVisibility[route]?.[key as keyof typeof settings.pageVisibility[string]] ?? true}
                       onChange={() => togglePageVisibility(route, key)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary accent-primary"
+                      className="h-4 w-4 rounded border-slate-300 text-primary accent-primary"
                     />
-                    <span className="text-gray-700">{label}</span>
+                    {label}
                   </label>
                 ))}
               </div>
-            </div>
+            </AdminCard>
           ))}
         </div>
       ) : null}
 
       {activeTab === "floating" ? (
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="space-y-5">
-            <label className="flex cursor-pointer items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold text-gray-900">Bouton flottant &quot;Faire un don&quot;</div>
-                <div className="text-xs text-gray-500">Afficher ou masquer le bouton flottant sur le site</div>
-              </div>
-              <button
-                onClick={() => update({ showFloatingButton: !settings.showFloatingButton })}
-                className={`relative inline-flex h-5 w-9 cursor-pointer rounded-full transition-colors ${settings.showFloatingButton ? "bg-primary" : "bg-gray-200"}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${settings.showFloatingButton ? "translate-x-[18px]" : "translate-x-[2px]"} mt-0.5`} />
-              </button>
-            </label>
+        <AdminCard padding="lg">
+          <label className="flex cursor-pointer items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">Bouton flottant « Faire un don »</div>
+              <div className="text-xs text-slate-500">Afficher ou masquer le bouton flottant sur le site public</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => update({ showFloatingButton: !settings.showFloatingButton })}
+              className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${settings.showFloatingButton ? "bg-primary" : "bg-slate-200"}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${settings.showFloatingButton ? "translate-x-[22px]" : "translate-x-0.5"} mt-0.5`} />
+            </button>
+          </label>
 
-            <div className="border-t border-gray-100 pt-4">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Pages d&apos;affichage</div>
-              <div className="space-y-2">
-                {allRoutes.map((route) => (
-                  <label key={route} className="flex cursor-pointer items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={settings.floatingButtonPages.includes(route)}
-                      onChange={() => {
-                        const updated = settings.floatingButtonPages.includes(route)
-                          ? settings.floatingButtonPages.filter((r) => r !== route)
-                          : [...settings.floatingButtonPages, route];
-                        update({ floatingButtonPages: updated });
-                      }}
-                      className="h-4 w-4 rounded border-gray-300 text-primary accent-primary"
-                    />
-                    <div>
-                      <span className="text-sm text-gray-900">{routeLabels[route]}</span>
-                      <span className="ml-2 text-xs text-gray-400">{route}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <div className="admin-label mb-3">Pages d&apos;affichage</div>
+            <div className="space-y-2">
+              {allRoutes.map((route) => (
+                <label key={route} className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={settings.floatingButtonPages.includes(route)}
+                    onChange={() => {
+                      const updated = settings.floatingButtonPages.includes(route)
+                        ? settings.floatingButtonPages.filter((r) => r !== route)
+                        : [...settings.floatingButtonPages, route];
+                      update({ floatingButtonPages: updated });
+                    }}
+                    className="h-4 w-4 rounded border-slate-300 text-primary accent-primary"
+                  />
+                  <span className="text-sm text-slate-900">{routeLabels[route]}</span>
+                  <span className="text-xs text-slate-400">{route}</span>
+                </label>
+              ))}
             </div>
           </div>
-        </div>
+        </AdminCard>
       ) : null}
-    </section>
+    </AdminPage>
   );
 }

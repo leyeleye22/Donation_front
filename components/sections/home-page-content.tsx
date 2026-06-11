@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { loadHomeContent, type HomeEditorContent } from "@/lib/admin/home-content";
 import { api } from "@/lib/api";
-import { mapProject, mapPost } from "@/lib/api-mappers";
+import { mapProject, mapPost, mapGalleryItem } from "@/lib/api-mappers";
 import { SectionVisibility } from "@/components/ui/section-visibility";
-import { resolveImageUrl } from "@/lib/image-url";
-import type { Project, Post } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/lib/format-date";
+import { useDonateModal } from "@/lib/donate-modal-context";
+import type { Project, Post, GalleryItem } from "@/lib/types";
 
 function projectProgress(goalAmount: number, collectedAmount: number) {
   return Math.round((collectedAmount / goalAmount) * 100);
@@ -49,9 +51,8 @@ export function HomePageContent() {
   const [cms, setCms] = useState<HomeEditorContent | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
-  const [donationOpen, setDonationOpen] = useState(false);
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [customAmount, setCustomAmount] = useState("");
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const { openDonate } = useDonateModal();
   const [activeProjectStatus, setActiveProjectStatus] = useState<(typeof homeProjectStatusFilters)[number]["id"]>("all");
   const [activeProjectTheme, setActiveProjectTheme] = useState<(typeof homeProjectThemeFilters)[number]["id"]>("all");
   const [homeProjectPage, setHomeProjectPage] = useState(1);
@@ -81,12 +82,17 @@ export function HomePageContent() {
     Promise.all([
       loadHomeContent(),
       api.getProjects("per_page=20"),
-      api.getPosts("per_page=3"),
-    ]).then(([cmsData, projectsRes, postsRes]) => {
-      if (cmsData) setCms(cmsData);
+      api.getPosts("per_page=3&published=1"),
+      api.getGallery(),
+    ]).then(([cmsData, projectsRes, postsRes, galleryRes]) => {
+      setCms(cmsData);
       if (projectsRes?.data) setProjects((projectsRes.data || []).map(mapProject));
       if (postsRes?.data) setFeaturedPosts((postsRes.data || []).map(mapPost));
-    }).catch((e) => { console.error("HomePageContent: failed to load data", e); });
+      if (galleryRes?.data) setGalleryItems((galleryRes.data || []).map(mapGalleryItem));
+    }).catch((e) => {
+      console.error("HomePageContent: failed to load data", e);
+      loadHomeContent().then(setCms);
+    });
   }, []);
 
   const filteredHomeProjects = useMemo(() => {
@@ -134,7 +140,63 @@ export function HomePageContent() {
     }
   }, [activeProjectId, filteredHomeProjects, paginatedHomeProjects]);
 
-  if (!cms) return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement...</div>;
+  if (!cms) {
+    return (
+      <div className="bg-white">
+        <section className="overflow-hidden bg-page-hero">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+            <div className="grid gap-12 lg:grid-cols-[0.92fr_1.08fr]">
+              <div>
+                <Skeleton className="mb-5 h-4 w-24" />
+                <Skeleton className="h-14 w-full max-w-[500px]" />
+                <Skeleton className="mt-6 h-6 w-full max-w-[400px]" />
+                <Skeleton className="mt-2 h-6 w-3/4 max-w-[350px]" />
+                <div className="mt-8 flex gap-4">
+                  <Skeleton className="h-14 w-40 rounded-[12px]" />
+                  <Skeleton className="h-14 w-40 rounded-[12px]" />
+                </div>
+                <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-24 rounded-[24px]" />
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                <Skeleton className="h-[540px] rounded-[36px]" />
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-64 rounded-[28px]" />
+                    <Skeleton className="h-64 rounded-[28px]" />
+                  </div>
+                  <Skeleton className="h-36 rounded-[30px]" />
+                  <Skeleton className="h-40 rounded-[28px]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section className="bg-white py-6">
+          <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-20 rounded-[26px]" />
+            ))}
+          </div>
+        </section>
+        <section className="bg-orange-50/40 py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <Skeleton className="mb-3 h-4 w-48" />
+            <Skeleton className="h-10 w-full max-w-[500px]" />
+            <Skeleton className="mt-4 h-6 w-full max-w-[400px]" />
+            <div className="mt-10 grid gap-6 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-[420px] rounded-[32px]" />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   if (!activeProject && projects.length === 0 && featuredPosts.length === 0) {
     return <div className="flex items-center justify-center py-24 text-sm text-gray-400">Chargement des donnees...</div>;
@@ -143,7 +205,7 @@ export function HomePageContent() {
   return (
     <>
       <SectionVisibility section="hero">
-        <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(239,146,33,0.16),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(65,182,75,0.18),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f7fbf4_54%,_#fff7ed_100%)]">
+        <section className="overflow-hidden bg-page-hero">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-20">
           <div className="flex flex-col justify-center">
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.28em] text-secondary">
@@ -155,15 +217,12 @@ export function HomePageContent() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">{cms?.heroDescription ?? ""}</p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <button
-                className="rounded-button bg-primary px-8 py-4 text-lg font-semibold text-white transition hover:bg-orange-500"
-                onClick={() => setDonationOpen(true)}
-              >
+              <button type="button" className="btn-primary-lg" onClick={openDonate}>
                 {cms?.primaryCta ?? ""}
               </button>
               <Link
                 href="/projects"
-                className="rounded-button border border-secondary/20 bg-white px-8 py-4 text-center text-lg font-semibold text-secondary transition hover:border-secondary hover:bg-secondary/5"
+                className="btn-outline-lg text-center"
               >
                 {cms?.secondaryCta ?? ""}
               </Link>
@@ -186,16 +245,17 @@ export function HomePageContent() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="relative overflow-hidden rounded-[36px] border border-white/10 shadow-[0_28px_90px_rgba(0,0,0,0.35)]">
-              <img src={resolveImageUrl("/assets/banner.jpeg")} alt="Mission humanitaire" className="h-[540px] w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/12 to-transparent" />
+            {cms.heroImage ? (
+            <div className="relative overflow-hidden rounded-[36px] border border-white/60 shadow-warm-lg">
+              <img src={cms.heroImage} alt={cms.featuredTitle || cms.heroTitle || "Mission"} className="h-[540px] w-full object-cover" />
+              <div className="overlay-image" />
               <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-6">
                 <div className="rounded-full border border-white/60 bg-white/85 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-secondary backdrop-blur">
                   {cms?.featuredLabel ?? ""}
                 </div>
                 <button
                   className="rounded-full bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg transition hover:bg-orange-500"
-                  onClick={() => setDonationOpen(true)}
+                  onClick={openDonate}
                 >
                   Soutenir
                 </button>
@@ -207,28 +267,42 @@ export function HomePageContent() {
                 </div>
               </div>
             </div>
+            ) : null}
 
             <div className="grid gap-4">
+              {(cms.supportImage || cms.entryPoints[0]?.image) ? (
               <div className="grid grid-cols-2 gap-4">
-                <img src={resolveImageUrl("/assets/consultation.jpeg")} alt="Consultation terrain" className="h-64 w-full rounded-[28px] object-cover" />
-                <img src={resolveImageUrl("/assets/education.jpeg")} alt="Education terrain" className="h-64 w-full rounded-[28px] object-cover" />
+                {cms.supportImage ? (
+                  <img src={cms.supportImage} alt="Action terrain" className="h-64 w-full rounded-[28px] object-cover" />
+                ) : null}
+                {cms.entryPoints[0]?.image ? (
+                  <img src={cms.entryPoints[0].image} alt={cms.entryPoints[0].title} className="h-64 w-full rounded-[28px] object-cover" />
+                ) : null}
               </div>
+              ) : null}
               <div className="rounded-[30px] border border-secondary/12 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
                 <div className="mb-4 flex items-center justify-between">
                     <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">Notre demarche</div>
-                    <div className="mt-2 text-2xl font-bold text-gray-950">Donner a voir l'impact concret de chaque action.</div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">{cms.featuredLabel}</div>
+                    <div className="mt-2 text-2xl font-bold text-gray-950">{cms.featuredTitle}</div>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {(cms?.trustPoints ?? []).map((point) => (
-                    <div key={point} className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-gray-700">
+                  {(cms?.trustPoints ?? []).map((point, index) => (
+                    <div
+                      key={point}
+                      className={`rounded-2xl border px-4 py-3 text-sm leading-6 text-gray-700 ${
+                        index % 2 === 0 ? "border-primary/10 bg-primary/5" : "border-secondary/10 bg-secondary/5"
+                      }`}
+                    >
                       {point}
                     </div>
                   ))}
                 </div>
               </div>
-              <img src={resolveImageUrl("/assets/puits.jpeg")} alt="Acces a l'eau" className="h-40 w-full rounded-[28px] object-cover" />
+              {cms.entryPoints[1]?.image ? (
+              <img src={cms.entryPoints[1].image} alt={cms.entryPoints[1].title} className="h-40 w-full rounded-[28px] object-cover" />
+              ) : null}
             </div>
           </div>
         </div>
@@ -249,10 +323,10 @@ export function HomePageContent() {
       </SectionVisibility>
 
       <SectionVisibility section="entryPoints">
-        <section className="bg-[#f8f5ef] py-20">
+        <section className="bg-section-fresh py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-3xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Decouvrir l'association</p>
+            <p className="page-eyebrow-alt mb-3">Decouvrir l&apos;association</p>
             <h2 className="text-4xl font-bold text-gray-950">Explorer nos actions, nos projets et notre impact.</h2>
             <p className="mt-4 text-lg leading-8 text-gray-600">
               Suivez nos projets en cours, parcourez le journal de terrain et plongez au coeur de nos interventions.
@@ -271,7 +345,7 @@ export function HomePageContent() {
                     alt={item.title}
                     className="h-64 w-full object-cover transition duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="overlay-image" />
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <div className="text-xs font-semibold uppercase tracking-[0.24em] text-white/80">Acces rapide</div>
                     <div className="mt-2 text-2xl font-bold text-white">{item.title}</div>
@@ -279,7 +353,7 @@ export function HomePageContent() {
                 </div>
                 <div className="p-6">
                   <p className="leading-7 text-gray-600">{item.description}</p>
-                  <div className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-primary">{item.cta}</div>
+                  <div className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-secondary">{item.cta}</div>
                 </div>
               </Link>
             ))}
@@ -302,7 +376,7 @@ export function HomePageContent() {
             </div>
             <Link
               href="/projects"
-              className="rounded-button bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-[0_16px_36px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+              className="btn-primary btn-md uppercase tracking-wide"
             >
               Voir tous les projets
             </Link>
@@ -313,11 +387,7 @@ export function HomePageContent() {
               <button
                 key={filter.id}
                 onClick={() => setActiveProjectStatus(filter.id)}
-                className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                  activeProjectStatus === filter.id
-                    ? "bg-primary text-white shadow-[0_12px_30px_rgba(239,146,33,0.22)]"
-                    : "bg-white text-gray-700 ring-1 ring-secondary/14 hover:text-secondary"
-                }`}
+                className={activeProjectStatus === filter.id ? "chip-active" : "chip-inactive"}
               >
                 {filter.label}
               </button>
@@ -329,11 +399,7 @@ export function HomePageContent() {
               <button
                 key={filter.id}
                 onClick={() => setActiveProjectTheme(filter.id)}
-                className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                  activeProjectTheme === filter.id
-                    ? "bg-secondary text-white shadow-[0_12px_30px_rgba(65,182,75,0.22)]"
-                    : "bg-white text-gray-700 ring-1 ring-secondary/14 hover:text-secondary"
-                }`}
+                className={activeProjectTheme === filter.id ? "chip-active-secondary" : "chip-inactive"}
               >
                 {filter.label}
               </button>
@@ -346,7 +412,7 @@ export function HomePageContent() {
                 <>
                   <div className="relative">
                     <img src={activeProject.coverImage} alt={activeProject.title.fr} className="h-[420px] w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-secondary/85 via-secondary/15 to-transparent" />
+                    <div className="overlay-image-soft" />
                     <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-6">
                       <div className="rounded-full bg-white/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-secondary backdrop-blur">
                         {projectThemeLabel(activeProject.theme)}
@@ -384,10 +450,11 @@ export function HomePageContent() {
 
                     <div className="flex flex-col justify-between">
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <img src={activeProject.coverImage} alt={`${activeProject.title.fr} scene terrain`} className="h-40 w-full rounded-[24px] object-cover" />
-                        <img src={resolveImageUrl("/assets/about.jpeg")} alt="Equipe terrain" className="h-40 w-full rounded-[24px] object-cover" />
+                        {activeProject.coverImage ? (
+                          <img src={activeProject.coverImage} alt={`${activeProject.title.fr} scene terrain`} className="h-40 w-full rounded-[24px] object-cover sm:col-span-2" />
+                        ) : null}
                       </div>
-                      <div className="mt-6 rounded-[24px] border border-primary/20 bg-gradient-to-r from-primary/12 to-secondary/10 p-4">
+                      <div className="mt-6 rounded-[24px] border border-primary/20 bg-gradient-to-r from-primary/12 to-orange-50 p-4">
                         <div className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Soutenir</div>
                         <h4 className="mt-2 text-xl font-bold text-gray-950">Contribuez a ce projet</h4>
                         <p className="mt-2 text-sm leading-6 text-gray-700">
@@ -396,14 +463,14 @@ export function HomePageContent() {
                       </div>
                       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                         <button
-                          onClick={() => setDonationOpen(true)}
-                          className="rounded-button bg-primary px-5 py-3 text-center text-sm font-semibold text-white shadow-[0_14px_32px_rgba(239,146,33,0.24)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                          onClick={openDonate}
+                          className="btn-primary btn-sm w-full sm:w-auto"
                         >
                           Soutenir ce projet
                         </button>
                         <Link
                           href={`/projects/${activeProject.slug}`}
-                          className="rounded-button border border-secondary/18 bg-white px-5 py-3 text-center text-sm font-semibold text-secondary transition hover:bg-secondary/6"
+                          className="btn-outline btn-sm w-full text-center sm:w-auto"
                         >
                           Voir plus sur ce projet
                         </Link>
@@ -415,7 +482,7 @@ export function HomePageContent() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-[24px] bg-[#f7fbf4] px-5 py-4">
+              <div className="flex items-center justify-between rounded-[24px] bg-orange-50/50 px-5 py-4">
                 <div className="text-sm text-gray-600">
                   <span className="font-semibold text-gray-950">{filteredHomeProjects.length}</span> projets trouves
                 </div>
@@ -463,7 +530,7 @@ export function HomePageContent() {
                       <div className="text-sm text-gray-600">Clique la carte pour changer le focus principal.</div>
                       <Link
                         href={`/projects/${project.slug}`}
-                        className="rounded-button bg-primary px-5 py-2.5 text-center text-sm font-semibold text-white shadow-[0_12px_30px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                        className="btn-primary btn-sm"
                       >
                         Voir plus
                       </Link>
@@ -513,34 +580,30 @@ export function HomePageContent() {
       </SectionVisibility>
 
       <SectionVisibility section="mission">
-        <section className="overflow-hidden bg-[linear-gradient(180deg,_#f8f5ef_0%,_#ffffff_100%)] py-20">
+        <section className="overflow-hidden bg-page-section py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <div className="rounded-[34px] border border-primary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Mission</p>
-              <h2 className="text-4xl font-bold leading-tight text-gray-950">Agir pour l'humain, avec transparence et efficacite.</h2>
-              <p className="mt-5 text-lg leading-8 text-gray-600">
-                Notre mission est de montrer ce qui est fait sur le terrain, de suivre l'avancement des projets et de donner a chacun les moyens de comprendre et de soutenir notre action.
-              </p>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-secondary">Mission</p>
+              <h2 className="text-4xl font-bold leading-tight text-gray-950">{cms?.donationTitle ?? ""}</h2>
+              <p className="mt-5 text-lg leading-8 text-gray-600">{cms?.donationDescription ?? ""}</p>
 
+              {(cms?.heroStats ?? []).length > 0 ? (
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-[24px] bg-primary/6 p-5">
-                  <div className="text-3xl font-bold text-gray-950">3</div>
-                  <div className="mt-1 text-sm text-gray-600">axes de lecture</div>
+                {(cms?.heroStats ?? []).slice(0, 3).map((stat) => (
+                <div key={stat.label} className="rounded-[24px] bg-primary/6 p-5">
+                  <div className="text-3xl font-bold text-gray-950">{stat.value}</div>
+                  <div className="mt-1 text-sm text-gray-600">{stat.label}</div>
                 </div>
-                <div className="rounded-[24px] bg-secondary/6 p-5">
-                  <div className="text-3xl font-bold text-gray-950">1</div>
-                  <div className="mt-1 text-sm text-gray-600">parcours plus clair</div>
-                </div>
-                <div className="rounded-[24px] bg-[#fff3df] p-5">
-                  <div className="text-3xl font-bold text-gray-950">100%</div>
-                  <div className="mt-1 text-sm text-gray-600">centre sur l'impact</div>
-                </div>
+                ))}
               </div>
+              ) : null}
 
+              {cms?.heroImage ? (
               <div className="mt-8 overflow-hidden rounded-[28px]">
-                <img src={resolveImageUrl("/assets/about.jpeg")} alt="Action humanitaire" className="h-64 w-full object-cover" />
+                <img src={cms.heroImage} alt={cms.heroTitle || "Action humanitaire"} className="h-64 w-full object-cover" />
               </div>
+              ) : null}
             </div>
 
             <div className="grid gap-5">
@@ -550,14 +613,20 @@ export function HomePageContent() {
                   className="group grid gap-4 rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 md:grid-cols-[84px_1fr]"
                 >
                   <div className="flex items-center gap-3 md:block">
-                    <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-lg font-bold text-white shadow-[0_12px_30px_rgba(65,182,75,0.18)]">
+                    <div
+                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold text-white ${
+                        index % 2 === 0
+                          ? "bg-gradient-to-br from-primary to-orange-400 shadow-warm"
+                          : "bg-gradient-to-br from-secondary to-green-500 shadow-fresh"
+                      }`}
+                    >
                       0{index + 1}
                     </div>
                     <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400 md:mt-3">Priorite</div>
                   </div>
 
                   <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                    <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${index % 2 === 0 ? "text-primary" : "text-secondary"}`}>
                       {index === 0 ? "Actions" : index === 1 ? "Journal" : "Confiance"}
                     </div>
                     <h3 className="text-2xl font-bold text-gray-950">{pillar.title}</h3>
@@ -566,7 +635,7 @@ export function HomePageContent() {
                 </div>
               ))}
 
-              <div className="rounded-[30px] border border-primary/14 bg-gradient-to-r from-primary/10 via-white to-secondary/10 p-6">
+              <div className="rounded-[30px] border border-secondary/14 bg-gradient-to-r from-secondary/8 via-white to-orange-50/60 p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Agir</div>
@@ -578,13 +647,13 @@ export function HomePageContent() {
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <Link
                       href="/projects"
-                      className="rounded-button bg-primary px-5 py-3 text-center text-sm font-semibold text-white shadow-[0_14px_32px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500"
+                      className="btn-primary btn-sm w-full sm:w-auto"
                     >
                       Voir les projets
                     </Link>
                     <button
-                      onClick={() => setDonationOpen(true)}
-                      className="rounded-button border border-secondary/18 bg-white px-5 py-3 text-center text-sm font-semibold text-secondary transition hover:bg-secondary/6"
+                      onClick={openDonate}
+                      className="btn-outline btn-sm w-full text-center sm:w-auto"
                     >
                       Faire un don
                     </button>
@@ -602,10 +671,10 @@ export function HomePageContent() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="max-w-2xl">
-                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Journal</p>
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-secondary">Journal</p>
               <h2 className="text-4xl font-bold text-gray-950">Suivez nos actualites et nos reportages de terrain.</h2>
             </div>
-            <Link href="/journal" className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-600 hover:text-primary">
+            <Link href="/journal" className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-600 hover:text-secondary">
               Ouvrir le journal
             </Link>
           </div>
@@ -620,7 +689,7 @@ export function HomePageContent() {
                 <h3 className="mb-4 text-3xl font-bold text-gray-950">{featuredPosts[0].title.fr}</h3>
                 <p className="mb-6 max-w-2xl text-lg leading-8 text-gray-600">{featuredPosts[0].excerpt.fr}</p>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                  <span>{featuredPosts[0].createdAt}</span>
+                  <span>{formatDate(featuredPosts[0].createdAt)}</span>
                   <span>Terrain</span>
                   <span>Suivi des actions</span>
                 </div>
@@ -636,20 +705,13 @@ export function HomePageContent() {
                 >
                   <img src={post.image} alt={post.title.fr} className="h-28 w-28 rounded-2xl object-cover" />
                   <div className="min-w-0">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">{post.createdAt}</div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">{formatDate(post.createdAt)}</div>
                     <h3 className="mb-2 text-lg font-bold text-gray-950">{post.title.fr}</h3>
                     <p className="line-clamp-3 text-sm leading-6 text-gray-600">{post.excerpt.fr}</p>
                   </div>
                 </Link>
               ))}
 
-              <div className="rounded-[30px] bg-[#fff3df] p-6">
-                <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Actualites</div>
-                <h3 className="mb-3 text-2xl font-bold text-gray-950">Des nouvelles regulieres du terrain pour suivre les projets.</h3>
-                <p className="text-sm leading-7 text-gray-600">
-                  Le journal de terrain permet de contextualiser les actions, de suivre leur evolution et de rendre compte de notre impact.
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -657,16 +719,20 @@ export function HomePageContent() {
       </SectionVisibility>
 
       <SectionVisibility section="transparency">
-        <section className="bg-[linear-gradient(180deg,_#f7fbf4_0%,_#ffffff_100%)] py-20">
+        <section className="bg-page-section py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
               <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-secondary">Transparence</p>
                 <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.transparencyTitle ?? ""}</h2>
                 <p className="max-w-xl leading-8 text-gray-600">{cms?.transparencyDescription ?? ""}</p>
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                  {(cms?.transparencyItems ?? []).map((item) => (
-                    <div key={item.label} className="rounded-2xl border border-primary/10 bg-primary/5 p-5">
+                  {(cms?.transparencyItems ?? []).map((item, index) => (
+                    <div
+                      key={item.label}
+                      className={`rounded-2xl border p-5 ${
+                        index % 2 === 0 ? "border-primary/10 bg-primary/5" : "border-secondary/10 bg-secondary/5"
+                      }`}
+                    >
                       <div className="text-2xl font-bold text-gray-950">{item.value}</div>
                       <div className="mt-1 text-sm text-gray-600">{item.label}</div>
                     </div>
@@ -674,12 +740,13 @@ export function HomePageContent() {
                 </div>
               </div>
 
+              {galleryItems.length > 0 ? (
               <div className="grid grid-cols-2 gap-4">
-                <img src={resolveImageUrl("/assets/about.jpeg")} alt="Association" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
-                <img src={resolveImageUrl("/assets/whats.jpeg")} alt="Terrain" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
-                <img src={resolveImageUrl("/assets/consultation.jpeg")} alt="Sante" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
-                <img src={resolveImageUrl("/assets/classe.jpeg")} alt="Education" className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
+                {galleryItems.slice(0, 4).map((item) => (
+                  <img key={item.id} src={item.image} alt={item.title.fr} className="h-56 w-full rounded-[28px] object-cover sm:h-72" />
+                ))}
               </div>
+              ) : null}
             </div>
           </div>
         </section>
@@ -690,36 +757,59 @@ export function HomePageContent() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-14 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Galerie</p>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-secondary">Galerie</p>
               <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.galleryTitle ?? ""}</h2>
               <p className="text-lg leading-8 text-gray-600">{cms?.galleryDescription ?? ""}</p>
             </div>
-            <Link href="/gallery" className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-600 hover:text-primary">
+            <Link href="/gallery" className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-600 hover:text-secondary">
               Voir toute la galerie
             </Link>
           </div>
+          {galleryItems.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <div className="relative overflow-hidden rounded-[34px]">
-              <img src={resolveImageUrl("/assets/whats.jpeg")} alt="Galerie terrain" className="h-[420px] w-full object-cover transition duration-500 hover:scale-[1.03]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-secondary/75 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">Focus terrain</div>
-                <div className="max-w-md text-2xl font-bold text-white">Des images qui temoignent de notre action et de notre impact sur le terrain.</div>
-              </div>
+              <img src={galleryItems[0].image} alt={galleryItems[0].title.fr} className="h-[420px] w-full object-cover transition duration-500 hover:scale-[1.03]" />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <img src={resolveImageUrl("/assets/1.jpeg")} alt="Galerie 1" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
-              <img src={resolveImageUrl("/assets/classe.jpeg")} alt="Galerie 2" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
-              <img src={resolveImageUrl("/assets/1.jpeg")} alt="Galerie 3 duplicate" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
-              <img src={resolveImageUrl("/assets/about.jpeg")} alt="Galerie 4" className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
+              {galleryItems.slice(1, 5).map((item) => (
+                <img key={item.id} src={item.image} alt={item.title.fr} className="h-48 w-full rounded-[24px] object-cover transition duration-500 hover:-translate-y-1 hover:scale-[1.03]" />
+              ))}
             </div>
           </div>
+          ) : null}
         </div>
         </section>
       </SectionVisibility>
 
+      {cms.testimonials && cms.testimonials.length > 0 ? (
+        <SectionVisibility section="testimonials">
+          <section className="bg-white py-20">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="mb-12 max-w-3xl">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Temoignages</p>
+                <h2 className="mb-4 text-4xl font-bold text-gray-950">Ceux que nous accompagnons temoignent</h2>
+                <p className="text-lg leading-8 text-gray-600">Parce que la meilleure preuve de notre action, c'est la parole de ceux qui la vivent au quotidien.</p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-3">
+                {cms.testimonials.map((t) => (
+                  <div key={t.name} className="flex flex-col rounded-[32px] border border-secondary/10 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
+                    <div className="mb-4 text-3xl leading-none text-secondary">"</div>
+                    <p className="flex-1 text-base leading-7 text-gray-700">{t.text}</p>
+                    <div className="mt-6 border-t border-secondary/10 pt-4">
+                      <div className="font-bold text-gray-950">{t.name}</div>
+                      <div className="text-sm text-gray-500">{t.role}</div>
+                      <div className="text-xs text-gray-400">{t.location}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </SectionVisibility>
+      ) : null}
+
       <SectionVisibility section="donationCta">
-        <section className="bg-[linear-gradient(90deg,_rgba(239,146,33,0.94)_0%,_rgba(65,182,75,0.96)_100%)] py-20">
+        <section className="bg-gradient-to-r from-primary via-orange-500 to-secondary py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
             <div>
@@ -731,14 +821,14 @@ export function HomePageContent() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <button
-                className="rounded-button bg-white px-8 py-4 text-lg font-semibold text-primary transition hover:bg-gray-100"
-                onClick={() => setDonationOpen(true)}
+                className="btn-white btn-lg"
+                onClick={openDonate}
               >
                 Faire un don
               </button>
               <Link
                 href="/projects"
-                className="rounded-button border-2 border-white bg-transparent px-8 py-4 text-center text-lg font-semibold text-white transition hover:bg-white hover:text-primary"
+                className="btn btn-lg border-2 border-white bg-transparent text-center text-white hover:bg-white hover:text-primary"
               >
                 Voir les projets
               </Link>
@@ -749,16 +839,16 @@ export function HomePageContent() {
       </SectionVisibility>
 
       <SectionVisibility section="newsletter">
-        <section className="bg-[#f8f5ef] py-16 md:py-20">
+        <section className="bg-section-warm py-16 md:py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Newsletter</p>
+            <p className="page-eyebrow-alt mb-3">Newsletter</p>
             <h2 className="mb-4 text-4xl font-bold text-gray-950">{cms?.newsletterTitle ?? ""}</h2>
             <p className="mx-auto max-w-2xl text-lg leading-8 text-gray-600">{cms?.newsletterDescription ?? ""}</p>
           </div>
 
           <div className="mx-auto mt-10 max-w-2xl rounded-[32px] bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] ring-1 ring-gray-100 md:p-8">
-            {newsletterMsg && <p className="mb-4 text-center text-sm font-medium text-green-600">{newsletterMsg}</p>}
+            {newsletterMsg && <p className="mb-4 text-center text-sm font-medium text-secondary">{newsletterMsg}</p>}
             {newsletterError && <p className="mb-4 text-center text-sm font-medium text-red-600">{newsletterError}</p>}
             <form onSubmit={handleNewsletterSubmit} className="space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -768,12 +858,12 @@ export function HomePageContent() {
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Votre adresse email"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-4 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="field text-base"
                 />
                 <button
                   type="submit"
                   disabled={newsletterLoading}
-                  className="whitespace-nowrap rounded-xl bg-primary px-6 py-4 text-base font-semibold text-white transition hover:bg-orange-600 disabled:opacity-50"
+                  className="btn-primary btn-md whitespace-nowrap disabled:opacity-50"
                 >
                   {newsletterLoading ? "Inscription..." : "S'abonner"}
                 </button>
@@ -784,61 +874,6 @@ export function HomePageContent() {
         </section>
       </SectionVisibility>
 
-      {donationOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4" onClick={() => setDonationOpen(false)}>
-          <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">Faire un don</h3>
-              <button onClick={() => setDonationOpen(false)} className="text-gray-500 hover:text-gray-700">
-                <span className="text-2xl">X</span>
-              </button>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <label className="mb-2 block font-medium text-gray-700">Montant du don</label>
-                <div className="mb-4 grid grid-cols-2 gap-3">
-                  {[
-                    { amount: 10000, label: "Nourriture 1 mois" },
-                    { amount: 25000, label: "Soins medicaux" },
-                    { amount: 50000, label: "Education 1 enfant" },
-                    { amount: 100000, label: "Acces a l'eau" }
-                  ].map(({ amount, label }) => (
-                    <button
-                      key={amount}
-                      type="button"
-                      onClick={() => { setSelectedAmount(amount); setCustomAmount(""); }}
-                      className={`rounded-xl border-2 p-4 text-center transition-all ${
-                        selectedAmount === amount
-                          ? "border-primary bg-orange-50"
-                          : "border-gray-200 hover:border-primary hover:bg-orange-50"
-                      }`}
-                    >
-                      <div className="text-lg font-bold text-gray-900">{amount.toLocaleString("fr-FR")} F</div>
-                      <div className="mt-1 text-sm text-gray-500">{label}</div>
-                    </button>
-                  ))}
-                </div>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={customAmount}
-                    onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
-                    placeholder="Autre montant"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">FCFA</div>
-                </div>
-              </div>
-              <div className="rounded-2xl bg-gray-50 p-4 text-sm leading-6 text-gray-600">
-                Votre don est securise. 98% des fonds sont directement alloues aux programmes.
-              </div>
-              <button className="w-full rounded-xl bg-primary py-4 text-lg font-bold text-white transition hover:bg-orange-600">
-                Effectuer le don
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }

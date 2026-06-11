@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { defaultHomeEditorContent, loadHomeContent, type HomeEditorContent, type HeroStat, type EntryPoint, type Pillar, type ProofItem } from "@/lib/admin/home-content";
+import { defaultHomeEditorContent, loadHomeContent, type HomeEditorContent } from "@/lib/admin/home-content";
 import { api } from "@/lib/api";
+import { AdminAlert } from "@/components/admin/ui/admin-alert";
+import { AdminButton } from "@/components/admin/ui/admin-button";
+import { AdminCard } from "@/components/admin/ui/admin-card";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { AdminTabs } from "@/components/admin/ui/admin-tabs";
+import { PageHeader } from "@/components/admin/ui/page-header";
 
 function TextField({ label, value, onChange, helpText, multiline }: {
   label: string; value: string; onChange: (value: string) => void; helpText?: string; multiline?: boolean;
@@ -10,10 +16,10 @@ function TextField({ label, value, onChange, helpText, multiline }: {
   const Tag = multiline ? "textarea" : "input";
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-gray-700">{label}</label>
+      <label className="admin-label">{label}</label>
       <Tag value={value} onChange={(e: any) => onChange(e.target.value)} rows={multiline ? 3 : undefined}
-        className="w-full rounded-2xl border border-secondary/14 px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
-      {helpText ? <p className="mt-2 text-sm leading-6 text-gray-500">{helpText}</p> : null}
+        className={multiline ? "admin-textarea" : "admin-input"} />
+      {helpText ? <p className="mt-2 text-sm leading-6 text-slate-500">{helpText}</p> : null}
     </div>
   );
 }
@@ -21,11 +27,10 @@ function TextField({ label, value, onChange, helpText, multiline }: {
 function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-gray-700">{label}</label>
+      <label className="admin-label">{label}</label>
       <div className="flex gap-3">
         {value ? <img src={value} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" /> : null}
-        <input value={value} onChange={(e) => onChange(e.target.value)}
-          className="flex-1 rounded-2xl border border-secondary/14 px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+        <input value={value} onChange={(e) => onChange(e.target.value)} className="admin-input flex-1" />
       </div>
     </div>
   );
@@ -41,27 +46,27 @@ function ItemsList<T extends { title?: string; text?: string; value?: string; la
   return (
     <div className="space-y-3">
       {items.map((item, i) => (
-        <div key={i} className="rounded-2xl border border-secondary/10 bg-gray-50/50 p-4">
+        <div key={i} className="admin-surface p-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-gray-400">#{i + 1}</span>
-            <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-xs font-semibold text-red-400">Supprimer</button>
+            <span className="text-xs font-semibold uppercase text-slate-400">#{i + 1}</span>
+            <AdminButton variant="danger" className="px-2 py-1 text-xs" onClick={() => onChange(items.filter((_, j) => j !== i))}>Supprimer</AdminButton>
           </div>
           <div className="space-y-2">
             {fields.map((f) => (
               f.type === "textarea"
                 ? <textarea key={f.key} placeholder={f.label} value={(item as any)[f.key] || ""} onChange={(e) => set(i, f.key, e.target.value)} rows={2}
-                    className="w-full rounded-xl border border-secondary/14 px-4 py-3 text-base outline-none focus:border-primary" />
+                    className="admin-textarea" />
                 : <input key={f.key} placeholder={f.label} value={(item as any)[f.key] || ""} onChange={(e) => set(i, f.key, e.target.value)}
-                    className="w-full rounded-xl border border-secondary/14 px-4 py-3 text-base outline-none focus:border-primary" />
+                    className="admin-input" />
             ))}
           </div>
         </div>
       ))}
-      <button onClick={() => {
+      <AdminButton variant="secondary" onClick={() => {
         const empty = {} as T;
         fields.forEach((f) => (empty as any)[f.key] = "");
         onChange([...items, empty]);
-      }} className="rounded-button border border-secondary/14 px-4 py-2 text-sm font-semibold text-secondary hover:bg-secondary/6">+ Ajouter</button>
+      }}>+ Ajouter</AdminButton>
     </div>
   );
 }
@@ -71,6 +76,7 @@ const steps = [
   { id: "hero", label: "Hero", title: "Hero & stats" },
   { id: "trust", label: "Confiance", title: "Barre & points" },
   { id: "entries", label: "Contenus", title: "Entrees & piliers" },
+  { id: "testimonials", label: "Temoignages", title: "Temoignages terrain" },
   { id: "end", label: "Final", title: "Transparence, galerie, CTA" },
 ] as const;
 
@@ -91,7 +97,7 @@ export function HomePageEditor() {
   async function handleSave() {
     setSaveError("");
     try {
-      await api.updatePage('home', content);
+      await api.updatePage("home", content);
       setSaved(true);
     } catch (e: any) {
       setSaveError(e?.message || "Erreur lors de l'enregistrement.");
@@ -103,50 +109,45 @@ export function HomePageEditor() {
     setContent(defaultHomeEditorContent);
   }
 
+  const activeStepId = steps[step].id;
+
   return (
-    <section className="space-y-8">
-      <div className="rounded-[34px] border border-secondary/12 bg-white p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Editeur Accueil</div>
-        <h1 className="mt-3 text-4xl font-bold text-gray-950">Tous les elements de l&apos;accueil.</h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-600">
-          Banniere, hero, confiance, points d&apos;entree, piliers, transparence, galerie et CTA don.
-        </p>
-      </div>
+    <AdminPage className="space-y-6">
+      <PageHeader
+        eyebrow="Site public"
+        title="Editeur page d'accueil"
+        description="Banniere, hero, confiance, points d'entree, piliers, transparence, galerie et CTA don."
+        meta={saved ? <span className="admin-badge-success">Modifications enregistrees</span> : <span className="admin-badge-neutral">Edition pas a pas</span>}
+      />
 
-      <div className="rounded-[30px] bg-white p-5 shadow-[0_16px_44px_rgba(15,23,42,0.06)] ring-1 ring-secondary/10">
-        <div className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">Edition pas a pas</div>
-        <div className="grid gap-3 md:grid-cols-5">
-          {steps.map((item, index) => {
-            const active = index === step; const done = index < step;
-            return (
-              <button key={item.id} type="button" onClick={() => setStep(index)}
-                className={`rounded-[22px] px-4 py-4 text-left transition ${active ? "bg-primary text-white shadow-[0_14px_32px_rgba(239,146,33,0.22)]" : done ? "bg-secondary/10 text-secondary" : "bg-[#f7fbf4] text-gray-700"}`}>
-                <div className={`mb-2 flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold ${active ? "bg-white/20 text-white" : "bg-white text-gray-950"}`}>{index + 1}</div>
-                <div className="text-sm font-semibold">{item.label}</div>
-                <div className={`mt-1 text-xs ${active ? "text-white/80" : "text-gray-500"}`}>{item.title}</div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {saveError ? <AdminAlert tone="error">{saveError}</AdminAlert> : null}
 
-      <div className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr]">
+      <AdminCard padding="md">
+        <div className="admin-eyebrow-alt mb-4">Etapes d&apos;edition</div>
+        <AdminTabs
+          tabs={steps.map((s) => ({ id: s.id, label: s.label }))}
+          active={activeStepId}
+          onChange={(id) => setStep(steps.findIndex((s) => s.id === id))}
+        />
+      </AdminCard>
+
+      <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
         <div className="space-y-6">
           {step === 0 ? (
-            <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Etape 1</div>
-              <div className="mb-5 text-2xl font-bold text-gray-950">Banniere d&apos;urgence</div>
+            <AdminCard padding="lg">
+              <div className="admin-eyebrow-alt mb-2">Etape 1</div>
+              <h2 className="mb-5 text-xl font-bold text-slate-900">Banniere d&apos;urgence</h2>
               <div className="space-y-5">
                 <TextField label="Label" value={content.emergencyLabel} onChange={(v) => update("emergencyLabel", v)} />
                 <TextField label="Texte" value={content.emergencyText} onChange={(v) => update("emergencyText", v)} multiline />
               </div>
-            </div>
+            </AdminCard>
           ) : null}
 
           {step === 1 ? (
-            <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Etape 2</div>
-              <div className="mb-5 text-2xl font-bold text-gray-950">Hero principal</div>
+            <AdminCard padding="lg">
+              <div className="admin-eyebrow-alt mb-2">Etape 2</div>
+              <h2 className="mb-5 text-xl font-bold text-slate-900">Hero principal</h2>
               <div className="space-y-5">
                 <TextField label="Eyebrow" value={content.heroEyebrow} onChange={(v) => update("heroEyebrow", v)} />
                 <TextField label="Titre" value={content.heroTitle} onChange={(v) => update("heroTitle", v)} multiline />
@@ -165,54 +166,61 @@ export function HomePageEditor() {
                   <ImageField label="Image support" value={content.supportImage} onChange={(v) => update("supportImage", v)} />
                 </div>
               </div>
-            </div>
+            </AdminCard>
           ) : null}
 
           {step === 2 ? (
-            <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Etape 3</div>
-              <div className="mb-5 text-2xl font-bold text-gray-950">Barre de confiance</div>
-              <div className="space-y-5">
-                <ItemsList items={content.proofStrip} onChange={(v) => update("proofStrip", v)} fields={[{ key: "value", label: "Valeur" }, { key: "label", label: "Label" }]} />
-              </div>
-            </div>
+            <AdminCard padding="lg">
+              <div className="admin-eyebrow-alt mb-2">Etape 3</div>
+              <h2 className="mb-5 text-xl font-bold text-slate-900">Barre de confiance</h2>
+              <ItemsList items={content.proofStrip} onChange={(v) => update("proofStrip", v)} fields={[{ key: "value", label: "Valeur" }, { key: "label", label: "Label" }]} />
+            </AdminCard>
           ) : null}
 
           {step === 3 ? (
-            <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Etape 4</div>
-              <div className="mb-5 text-2xl font-bold text-gray-950">Points d&apos;entree & Piliers</div>
+            <AdminCard padding="lg">
+              <div className="admin-eyebrow-alt mb-2">Etape 4</div>
+              <h2 className="mb-5 text-xl font-bold text-slate-900">Points d&apos;entree & Piliers</h2>
               <div className="space-y-6">
                 <div>
-                  <div className="mb-3 text-sm font-semibold text-gray-700">Points d&apos;entree</div>
+                  <div className="admin-label mb-3">Points d&apos;entree</div>
                   <ItemsList items={content.entryPoints} onChange={(v) => update("entryPoints", v)}
                     fields={[{ key: "title", label: "Titre" }, { key: "description", label: "Description", type: "textarea" }, { key: "image", label: "Image (chemin)" }, { key: "cta", label: "CTA" }]} />
                 </div>
                 <div>
-                  <div className="mb-3 text-sm font-semibold text-gray-700">Piliers</div>
+                  <div className="admin-label mb-3">Piliers</div>
                   <ItemsList items={content.pillars} onChange={(v) => update("pillars", v)}
                     fields={[{ key: "title", label: "Titre" }, { key: "description", label: "Description", type: "textarea" }]} />
                 </div>
               </div>
-            </div>
+            </AdminCard>
           ) : null}
 
           {step === 4 ? (
+            <AdminCard padding="lg">
+              <div className="admin-eyebrow-alt mb-2">Etape 5</div>
+              <h2 className="mb-5 text-xl font-bold text-slate-900">Temoignages terrain</h2>
+              <ItemsList items={content.testimonials} onChange={(v) => update("testimonials", v)}
+                fields={[{ key: "name", label: "Nom" }, { key: "location", label: "Localisation" }, { key: "text", label: "Temoignage", type: "textarea" }, { key: "role", label: "Role / Fonction" }]} />
+            </AdminCard>
+          ) : null}
+
+          {step === 5 ? (
             <div className="space-y-6">
-              <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Etape 5</div>
-                <div className="mb-5 text-2xl font-bold text-gray-950">Transparence & Galerie</div>
+              <AdminCard padding="lg">
+                <div className="admin-eyebrow-alt mb-2">Etape 6</div>
+                <h2 className="mb-5 text-xl font-bold text-slate-900">Transparence & Galerie</h2>
                 <div className="space-y-5">
                   <TextField label="Titre transparence" value={content.transparencyTitle} onChange={(v) => update("transparencyTitle", v)} />
                   <TextField label="Description transparence" value={content.transparencyDescription} onChange={(v) => update("transparencyDescription", v)} multiline />
                   <ItemsList items={content.transparencyItems} onChange={(v) => update("transparencyItems", v)} fields={[{ key: "value", label: "Valeur" }, { key: "label", label: "Label" }]} />
-                  <hr className="border-secondary/10" />
+                  <hr className="border-slate-100" />
                   <TextField label="Titre galerie" value={content.galleryTitle} onChange={(v) => update("galleryTitle", v)} />
                   <TextField label="Description galerie" value={content.galleryDescription} onChange={(v) => update("galleryDescription", v)} multiline />
                 </div>
-              </div>
-              <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
-                <div className="mb-5 text-2xl font-bold text-gray-950">CTA Don & Newsletter</div>
+              </AdminCard>
+              <AdminCard padding="lg">
+                <h2 className="mb-5 text-xl font-bold text-slate-900">CTA Don & Newsletter</h2>
                 <div className="space-y-5">
                   <TextField label="Titre CTA don" value={content.donationTitle} onChange={(v) => update("donationTitle", v)} multiline />
                   <TextField label="Description CTA don" value={content.donationDescription} onChange={(v) => update("donationDescription", v)} multiline />
@@ -220,46 +228,41 @@ export function HomePageEditor() {
                     <TextField label="Bouton don" value={content.donationPrimaryCta} onChange={(v) => update("donationPrimaryCta", v)} />
                     <TextField label="Bouton secondaire" value={content.donationSecondaryCta} onChange={(v) => update("donationSecondaryCta", v)} />
                   </div>
-                  <hr className="border-secondary/10" />
+                  <hr className="border-slate-100" />
                   <TextField label="Titre newsletter" value={content.newsletterTitle} onChange={(v) => update("newsletterTitle", v)} />
                   <TextField label="Description newsletter" value={content.newsletterDescription} onChange={(v) => update("newsletterDescription", v)} multiline />
                 </div>
-              </div>
+              </AdminCard>
             </div>
           ) : null}
 
-          <div className="sticky bottom-4 z-20 rounded-[28px] border border-secondary/10 bg-white/95 p-4 shadow-[0_18px_44px_rgba(15,23,42,0.10)] backdrop-blur">
+          <div className="admin-surface sticky bottom-4 z-20 p-4 backdrop-blur">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm text-gray-600">
-                {saved ? <span className="font-semibold text-secondary">Modifications enregistrees.</span> : "Pense a sauvegarder."}
-                {saveError ? <span className="ml-2 font-semibold text-red-500">{saveError}</span> : null}
+              <div className="text-sm text-slate-600">
+                {saved ? <span className="font-semibold text-emerald-600">Modifications enregistrees.</span> : "Pense a sauvegarder."}
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={() => setStep((c) => Math.max(0, c - 1))} disabled={step === 0}
-                  className="rounded-button border border-secondary/16 bg-white px-5 py-3 text-sm font-semibold text-secondary transition disabled:cursor-not-allowed disabled:opacity-40 hover:bg-secondary/6">Precedent</button>
-                <button type="button" onClick={() => setStep((c) => Math.min(steps.length - 1, c + 1))} disabled={step === steps.length - 1}
-                  className="rounded-button border border-secondary/16 bg-white px-5 py-3 text-sm font-semibold text-secondary transition disabled:cursor-not-allowed disabled:opacity-40 hover:bg-secondary/6">Suivant</button>
-                <button type="button" onClick={handleReset}
-                  className="rounded-button border border-secondary/16 bg-white px-5 py-3 text-sm font-semibold text-secondary transition hover:bg-secondary/6">Reinitialiser</button>
-                <button type="button" onClick={handleSave}
-                  className="rounded-button bg-primary px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(239,146,33,0.22)] transition hover:-translate-y-0.5 hover:bg-orange-500">Enregistrer</button>
+                <AdminButton variant="ghost" onClick={() => setStep((c) => Math.max(0, c - 1))} disabled={step === 0}>Precedent</AdminButton>
+                <AdminButton variant="ghost" onClick={() => setStep((c) => Math.min(steps.length - 1, c + 1))} disabled={step === steps.length - 1}>Suivant</AdminButton>
+                <AdminButton variant="secondary" onClick={handleReset}>Reinitialiser</AdminButton>
+                <AdminButton onClick={handleSave}>Enregistrer</AdminButton>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-[30px] border border-secondary/10 bg-white p-6 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
-          <div className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Apercu rapide</div>
-          <div className="space-y-3 text-sm text-gray-600">
-            <div><span className="font-semibold text-gray-900">Banniere:</span> {content.emergencyLabel}</div>
-            <div><span className="font-semibold text-gray-900">Hero:</span> {content.heroEyebrow} — {content.heroStats.length} stats</div>
-            <div><span className="font-semibold text-gray-900">Confiance:</span> {content.proofStrip.length} elements</div>
-            <div><span className="font-semibold text-gray-900">Entrees:</span> {content.entryPoints.length} points</div>
-            <div><span className="font-semibold text-gray-900">Piliers:</span> {content.pillars.length} piliers</div>
-            <div><span className="font-semibold text-gray-900">Transparence:</span> {content.transparencyItems.length} items</div>
+        <AdminCard padding="lg" className="h-fit">
+          <div className="admin-eyebrow-alt mb-4">Apercu rapide</div>
+          <div className="space-y-3 text-sm text-slate-600">
+            <div><span className="font-semibold text-slate-900">Banniere:</span> {content.emergencyLabel}</div>
+            <div><span className="font-semibold text-slate-900">Hero:</span> {content.heroEyebrow} — {content.heroStats.length} stats</div>
+            <div><span className="font-semibold text-slate-900">Confiance:</span> {content.proofStrip.length} elements</div>
+            <div><span className="font-semibold text-slate-900">Entrees:</span> {content.entryPoints.length} points</div>
+            <div><span className="font-semibold text-slate-900">Piliers:</span> {content.pillars.length} piliers</div>
+            <div><span className="font-semibold text-slate-900">Transparence:</span> {content.transparencyItems.length} items</div>
           </div>
-        </div>
+        </AdminCard>
       </div>
-    </section>
+    </AdminPage>
   );
 }

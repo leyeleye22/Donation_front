@@ -2,6 +2,15 @@
 
 import { api } from "@/lib/api";
 import { useCallback, useEffect, useState } from "react";
+import { AdminAlert } from "@/components/admin/ui/admin-alert";
+import { AdminButton } from "@/components/admin/ui/admin-button";
+import { AdminEmptyState } from "@/components/admin/ui/admin-empty-state";
+import { AdminPage } from "@/components/admin/ui/admin-page";
+import { PageHeader } from "@/components/admin/ui/page-header";
+import { StatCard } from "@/components/admin/ui/stat-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/lib/format-date";
+import { IconUsers } from "@/components/admin/icons";
 
 type Subscriber = { id: string; email: string; name: string | null; is_active: boolean; subscribed_at: string; created_at: string };
 
@@ -32,7 +41,6 @@ export default function NewsletterPage() {
       load();
       setMsg("Abonne supprime");
     } catch (e: any) {
-      console.error("Newsletter: delete", e);
       setMsg(e.message || "Erreur suppression");
     }
   }
@@ -52,75 +60,78 @@ export default function NewsletterPage() {
     !search || s.email.toLowerCase().includes(search.toLowerCase()) || (s.name?.toLowerCase().includes(search.toLowerCase()))
   );
 
-  if (loading) return <div className="p-4 text-gray-500">Chargement...</div>;
+  if (loading) {
+    return (
+      <AdminPage className="space-y-6">
+        <Skeleton className="h-28 rounded-2xl" />
+        <div className="admin-kpi-grid">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+        </div>
+        <Skeleton className="h-12 rounded-xl" />
+        <Skeleton className="h-64 rounded-2xl" />
+      </AdminPage>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Abonnes a la newsletter</h2>
-          <p className="text-sm text-gray-500">Gerez les abonnes a la newsletter</p>
-        </div>
-        <button onClick={handleExport} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-          Exporter CSV
-        </button>
-      </div>
+    <AdminPage className="space-y-6">
+      <PageHeader
+        eyebrow="Relations & confiance"
+        eyebrowAlt
+        title="Abonnes newsletter"
+        description="Communaute engagee autour de vos actions. Exportez la liste pour vos campagnes de communication."
+        actions={<AdminButton variant="secondary" onClick={handleExport}>Exporter CSV</AdminButton>}
+      />
 
-      {msg && <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{msg}</div>}
-      {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      {msg ? <AdminAlert tone="success">{msg}</AdminAlert> : null}
+      {error ? <AdminAlert tone="error">{error}</AdminAlert> : null}
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-          <p className="text-sm text-gray-500">Total abonnes</p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <p className="text-2xl font-bold text-green-600">{stats.active}</p>
-          <p className="text-sm text-gray-500">Abonnes actifs</p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <p className="text-2xl font-bold text-red-600">{stats.total - stats.active}</p>
-          <p className="text-sm text-gray-500">Desabonnes</p>
-        </div>
+      <div className="admin-kpi-grid">
+        <StatCard label="Total abonnes" value={String(stats.total)} accent="slate" icon={<IconUsers className="h-5 w-5" />} />
+        <StatCard label="Actifs" value={String(stats.active)} accent="green" icon={<IconUsers className="h-5 w-5" />} trend={{ label: "Engagement", positive: stats.active > 0 }} />
+        <StatCard label="Desabonnes" value={String(stats.total - stats.active)} accent="orange" icon={<IconUsers className="h-5 w-5" />} />
       </div>
 
       <input
-        type="text" placeholder="Rechercher par email ou nom..."
-        value={search} onChange={(e) => setSearch(e.target.value)}
-        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+        type="text"
+        placeholder="Rechercher par email ou nom..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="admin-input"
       />
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center">
-          <p className="text-gray-500">{search ? "Aucun resultat" : "Aucun abonne pour le moment."}</p>
-        </div>
+        <AdminEmptyState
+          title={search ? "Aucun resultat" : "Aucun abonne pour le moment"}
+          description={search ? "Essayez un autre terme de recherche." : "Les inscriptions depuis le site public apparaitront ici."}
+        />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-          <table className="w-full text-sm">
+        <div className="admin-table-wrap">
+          <table className="admin-table">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                <th className="px-5 py-3">Email</th>
-                <th className="px-5 py-3">Nom</th>
-                <th className="px-5 py-3">Statut</th>
-                <th className="px-5 py-3">Date</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+              <tr>
+                <th>Email</th>
+                <th>Nom</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((s) => (
-                <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="px-5 py-3 font-medium text-gray-900">{s.email}</td>
-                  <td className="px-5 py-3 text-gray-600">{s.name || "-"}</td>
-                  <td className="px-5 py-3">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${s.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                <tr key={s.id}>
+                  <td className="font-medium text-slate-900">{s.email}</td>
+                  <td>{s.name || "—"}</td>
+                  <td>
+                    <span className={s.is_active ? "admin-badge-success" : "admin-badge-danger"}>
                       {s.is_active ? "Actif" : "Desabonne"}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-gray-500">{new Date(s.subscribed_at ?? s.created_at).toLocaleDateString("fr-FR")}</td>
-                  <td className="px-5 py-3 text-right">
-                    <button onClick={() => handleDelete(s.id)} className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50">
+                  <td className="text-slate-500">{formatDate(s.subscribed_at ?? s.created_at)}</td>
+                  <td className="text-right">
+                    <AdminButton variant="danger" className="px-3 py-1.5 text-xs" onClick={() => handleDelete(s.id)}>
                       Supprimer
-                    </button>
+                    </AdminButton>
                   </td>
                 </tr>
               ))}
@@ -128,6 +139,6 @@ export default function NewsletterPage() {
           </table>
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

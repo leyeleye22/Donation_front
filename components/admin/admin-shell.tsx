@@ -2,22 +2,35 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
 import { adminLogout } from "@/lib/admin-auth";
-import { adminNavigation, type AdminNavItem } from "@/lib/admin/navigation";
+import { adminNavigation } from "@/lib/admin/navigation";
+import { assetUrl } from "@/lib/config";
+import { api } from "@/lib/api";
+import { IconExternal, IconMenu, IconX } from "@/components/admin/icons";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState("Administrateur");
 
-  const navigationItems: AdminNavItem[] = adminNavigation.reduce<AdminNavItem[]>((accumulator, group) => {
-    accumulator.push(...group.items);
-    return accumulator;
-  }, []);
+  useEffect(() => {
+    if (pathname === "/login") return;
+    api.getMe().then((user) => {
+      if (user?.name) setUserName(user.name);
+    }).catch(() => {});
+  }, [pathname]);
 
-  const currentSection = navigationItems.find((item) => pathname === item.href);
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   async function handleLogout() {
-    try { await adminLogout(); } catch {}
+    try {
+      await adminLogout();
+    } catch {}
     router.push("/login");
     router.refresh();
   }
@@ -26,78 +39,132 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto flex min-h-screen max-w-[1600px]">
-        <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
-            <img src="http://localhost:8001/assets/logo.png" alt="Logo" className="h-9 w-9" />
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-primary">Admin</div>
-              <div className="text-sm font-bold text-gray-900">Entr&apos;aide</div>
-            </div>
-          </div>
+  const initials = userName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-          <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-            {adminNavigation.map((group) => (
-              <div key={group.title}>
-                <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">{group.title}</div>
+  function isActive(href: string) {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
+  return (
+    <div className="admin-shell min-h-screen bg-[var(--admin-bg)]">
+      {sidebarOpen ? (
+        <button
+          type="button"
+          aria-label="Fermer le menu"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-slate-200/80 bg-white shadow-[4px_0_24px_rgba(15,23,42,0.04)] transition-transform duration-300 lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="border-b border-slate-100 px-5 py-5">
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 to-green-50 ring-1 ring-primary/15">
+                <img src={assetUrl("/assets/logo.png")} alt="Logo" className="h-8 w-8 object-contain" />
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-bold text-slate-900">Entr&apos;aide</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Centre de decision</div>
+              </div>
+            </Link>
+            <button
+              type="button"
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-50 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <IconX />
+            </button>
+          </div>
+        </div>
+
+        <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
+          {adminNavigation.map((group) => (
+            <div key={group.title}>
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                {group.title}
+              </div>
+              <div className="space-y-1">
                 {group.items.map((item) => {
-                  const active = pathname === item.href;
+                  const active = isActive(item.href);
+                  const Icon = item.icon;
+
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
                         active
-                          ? "bg-orange-50 font-semibold text-primary"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          ? "bg-gradient-to-r from-primary/10 to-green-50/80 font-semibold text-slate-900 ring-1 ring-primary/15"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                       }`}
                     >
-                      <span>{item.label}</span>
+                      {active ? (
+                        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-gradient-to-b from-primary to-secondary" />
+                      ) : null}
+                      {Icon ? (
+                        <Icon className={`h-[18px] w-[18px] ${active ? "text-primary" : "text-slate-400 group-hover:text-primary"}`} />
+                      ) : (
+                        <span className={`h-2 w-2 rounded-full ${active ? "bg-primary" : "bg-slate-300"}`} />
+                      )}
+                      <span className="truncate">{item.label}</span>
                     </Link>
                   );
                 })}
               </div>
-            ))}
-          </nav>
+            </div>
+          ))}
+        </nav>
 
-          <div className="border-t border-gray-100 px-3 py-3">
-            <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-500">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500">
-                A
-              </span>
-              <span className="truncate text-xs">Administrateur</span>
+        <div className="border-t border-slate-100 p-4">
+          <div className="admin-surface-soft flex items-center gap-3 px-3 py-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-xs font-bold text-white">
+              {initials}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-semibold text-slate-900">{userName}</div>
+              <div className="text-xs text-slate-500">Administrateur ONG</div>
             </div>
           </div>
-        </aside>
-
-        <div className="ml-64 flex flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
-            <div className="flex items-center justify-between px-6 py-3">
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">{currentSection?.label ?? "Tableau de bord"}</h1>
-                <p className="text-xs text-gray-500">Espace d&apos;administration</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/"
-                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
-                >
-                  Voir le site
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:brightness-90"
-                >
-                  D&eacute;connexion
-                </button>
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 px-6 py-6">{children}</main>
         </div>
+      </aside>
+
+      <div className="lg:pl-[280px]">
+        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
+          <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                className="admin-btn-ghost p-2 lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <IconMenu />
+              </button>
+              <AdminBreadcrumbs />
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Link href="/" target="_blank" className="admin-btn-ghost hidden sm:inline-flex text-xs">
+                Voir le site
+                <IconExternal />
+              </Link>
+              <button type="button" onClick={handleLogout} className="admin-btn-primary text-xs">
+                Deconnexion
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="px-4 py-6 sm:px-6 lg:py-8">{children}</main>
       </div>
     </div>
   );

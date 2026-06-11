@@ -1,4 +1,6 @@
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api';
+import { API_URL } from "@/lib/config";
+
+const API = API_URL;
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -36,8 +38,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (res.status === 401) {
+    const hadToken = !!token;
     removeToken();
-    if (typeof window !== 'undefined') {
+    if (
+      typeof window !== 'undefined' &&
+      hadToken &&
+      !window.location.pathname.startsWith('/login')
+    ) {
       window.location.href = '/login';
     }
     throw new Error('Non authentifie');
@@ -77,6 +84,7 @@ export const api = {
   // Projects
   getProjects: (params?: string) => request<any>(`/projects${params ? '?' + params : ''}`),
   getProject: (id: string) => request<any>(`/projects/${id}`),
+  getProjectBySlug: (slug: string) => request<any>(`/projects/slug/${slug}`),
   createProject: (data: any) => request<any>('/projects', { method: 'POST', body: JSON.stringify(data) }),
   updateProject: (id: string, data: any) => request<any>(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProject: (id: string) => request<void>(`/projects/${id}`, { method: 'DELETE' }),
@@ -105,7 +113,7 @@ export const api = {
   },
 
   // Navigation
-  getNavigation: () => request<any>('/navigation'),
+  getNavigation: (all = false) => request<any>(`/navigation${all ? "?all=1" : ""}`),
   createNavigationItem: (data: any) => request<any>('/navigation', { method: 'POST', body: JSON.stringify(data) }),
   updateNavigationItem: (id: string, data: any) => request<any>(`/navigation/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteNavigationItem: (id: string) => request<void>(`/navigation/${id}`, { method: 'DELETE' }),
@@ -157,6 +165,13 @@ export const api = {
 
   sendEmailTemplate: (id: string, overrides?: { subject?: string; content?: string }) =>
     request<any>(`/email-templates/${id}/send`, { method: 'POST', body: JSON.stringify(overrides || {}) }),
+
+  // Contact messages (admin)
+  getContactMessages: () => request<any>('/contact-messages'),
+  markContactMessageRead: (id: string) =>
+    request<any>(`/contact-messages/${id}/read`, { method: 'PUT' }),
+  deleteContactMessage: (id: string) =>
+    request<void>(`/contact-messages/${id}`, { method: 'DELETE' }),
 
   // Dashboard
   getDashboardKpi: () => request<any>('/dashboard/kpi'),

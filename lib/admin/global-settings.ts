@@ -10,6 +10,7 @@ export type PageSectionVisibility = {
   journal: boolean;
   transparency: boolean;
   gallery: boolean;
+  testimonials: boolean;
   donationCta: boolean;
   newsletter: boolean;
   footer: boolean;
@@ -53,6 +54,7 @@ function allVisible(): PageSectionVisibility {
     journal: true,
     transparency: true,
     gallery: true,
+    testimonials: true,
     donationCta: true,
     newsletter: true,
     footer: true
@@ -74,7 +76,7 @@ export const defaultGlobalSettings: GlobalSettings = {
   showFloatingButton: true,
   floatingButtonPages: ["/", "/about", "/projects", "/journal", "/gallery", "/contact"],
   footerCopyright: "Entraide Pour Servir L Humanite. Tous droits reserves.",
-  footerIntro: "Une association qui documente ses actions pour plus de transparence et d impact.",
+  footerIntro: "Association humanitaire au Senegal et au Niger.",
   pageSettings: {
     "/": defaultPageSettings,
     "/about": defaultPageSettings,
@@ -103,7 +105,9 @@ export async function loadGlobalSettings(): Promise<GlobalSettings> {
   try {
     const res = await api.getSettings();
     if (res) return mapSettings(res);
-  } catch {}
+  } catch (e) {
+    console.error("loadGlobalSettings: failed to load", e);
+  }
   return defaultGlobalSettings;
 }
 
